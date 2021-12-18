@@ -4,7 +4,7 @@
 # Python botserver daemon
 # @see:
 #       Message format:
-#           "sys,command"           System command [commands: close, shutdown]
+#           "sys,command"           System command [commands: exit, shutdown]
 #           "msg,username,message"  Send message to username
 #
 
@@ -95,7 +95,7 @@ class serverDaemon:
                         self._socketClose(client)
                         self._socketClose(self._sock)
                         return
-                    elif command[1] == 'close':
+                    elif command[1] == 'exit':
                         self._socketClose(client)
                     else:
                         self._sendMessage(client, f"ERROR: Invalid system command ({command[1]})")

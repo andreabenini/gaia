@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+import sys
+try:
+    import ssl
+    import socket
+    import argparse
+except ModuleNotFoundError as E:
+    print(f"{E}. Install required module.")
+    sys.exit(1)
+
+class botCtl:
+    @property
+    def debug(self):
+        return self.__debug
+    @debug.setter
+    def debug(self, boolValue):
+        if isinstance(boolValue, (bool)):
+            self.__debug = boolValue
+        else:
+            self.__debug = False
+    def __debugPrint(self, message=None):
+        if self.debug:
+            print(f"DEBUG>  {message}")
+    def __error(self, message=None):
+        print(message)
+        sys.exit(1)
+
+    def __connect(self, host=None, port=None):
+        try:
+            print(f"Trying {host}:{port}...")
+            self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__socket.connect((host, port))
+        except socket.error:
+            self.__error('Connection failed')
+
+
+    def __init__(self, host=None, port=None, debug=False):
+        self.debug = debug
+        self.__connect(host=host, port=port)
+        print(f"Connected to {host}:{port}\n")
+        cmd = None
+        while cmd!='exit' and cmd!='sys,exit' and cmd!='sys,shutdown':
+            try:
+                cmd = input("> ").strip()
+                if cmd!=None and cmd!='' and cmd!='exit':
+                    self.__socket.send((cmd+'\n').encode('UTF-8'))
+                    msg = self.__socket.recv(1024).decode('UTF-8').strip()
+                    print(msg)
+            except socket.error:
+                self.__error(f"Cannot send '{cmd}'")
+
+if __name__ == '__main__':
+    try: # Parsing params
+        parser = argparse.ArgumentParser(description='Bot command line interface')
+        parser.add_argument('-D', '--debug', dest='debug',   action='store_true', help='Turn on debugging')
+        parser.add_argument('-H', '--host',  metavar='HOST', type=str,  help='Server hostname [default: localhost]', default='127.0.0.1')
+        parser.add_argument('-P', '--port',  metavar='PORT', type=str,  help='Server portname [default: 6667]',      default='6667')
+        parser.set_defaults(debug=False)
+        args = parser.parse_args()
+        # Command line interface console
+        botCommandLine = botCtl(host=args.host, port=int(args.port), debug=args.debug)
+
+    except KeyboardInterrupt:
+        print("\nInterrupt request, utility aborted\n")
+
+# HOST, PORT = 'example.com', 443
+# def handle(conn):
+#     conn.write(b'GET / HTTP/1.1\n')
+#     print(conn.recv().decode())
+# def main():
+#     sock = socket.socket(socket.AF_INET)
+#     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+#     context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # optional
+#     conn = context.wrap_socket(sock, server_hostname=HOST)
+#     try:
+#         conn.connect((HOST, PORT))
+#         handle(conn)
+#     finally:
+#         conn.close()

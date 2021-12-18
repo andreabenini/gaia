@@ -2,13 +2,16 @@
 # -*- coding: utf-8 -*-
 #
 # Python botserver daemon
+# @see:
+#       Message format:
+#           "sys,command"           System command [commands: close, shutdown]
+#           "msg,username,message"  Send message to username
 #
 
 # Program imports
 import sys
 import socket
 import select
-import argparse
 
 from config     import serverConfiguration
 from chatengine import chatEngine

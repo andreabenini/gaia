@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Python botserver daemon
+# Bare bone chat engine
+# @see:
+#     self.valid    Second stage constructor
 #
 
 # Program imports

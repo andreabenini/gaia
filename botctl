@@ -45,8 +45,10 @@ class botCtl:
                 cmd = input("> ").strip()
                 if cmd!=None and cmd!='' and cmd!='exit':
                     self.__socket.send((cmd+'\n').encode('UTF-8'))
-                    msg = self.__socket.recv(1024).decode('UTF-8').strip()
-                    print(msg)
+                    msg = self.__socket.recv(1024)
+                    if msg:
+                        msg = msg.decode('UTF-8').strip()
+                        print(msg)
             except socket.error:
                 self.__error(f"Cannot send '{cmd}'")
 

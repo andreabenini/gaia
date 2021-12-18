@@ -1,0 +1,128 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Python botserver daemon
+#
+
+# Program imports
+import sys
+import socket
+import select
+import argparse
+
+from config     import serverConfiguration
+from chatengine import chatEngine
+
+# Main (and only) class
+class serverDaemon:
+    @property
+    def debug(self):
+        return self._debug
+    @debug.setter
+    def debug(self, boolValue):
+        if isinstance(boolValue, (bool)):
+            self._debug = boolValue
+        else:
+            self._debug = False
+
+    def _exit(self, message='', errorlevel=1):
+        print("\nERROR: Program aborted")
+        if message != '': print(f"ERROR: {message}")
+        print("")
+        sys.exit(errorlevel)
+
+    def __init__(self, config=None, debug=False):
+        if not config.valid:
+            self._exit(f'Configuration file not found or invalid [{configuration.filename}]') 
+        self.debug = debug
+        # TCP
+        self._tcpTimeout = 60
+        self._tcpBufferSize = 1024
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sock.bind((config.property['botserverHost'], config.property['botserverPort']))
+        self._sock.listen(1)    # Incoming connection limit (pretty low, local usage only)
+        self._debugPrint(message=f"daemon started {(config.property['botserverHost'], config.property['botserverPort'])}")
+
+
+    # Program main loop
+    def loop(self):
+        self._engine = chatEngine()
+        if not self._engine.valid:
+            self._exit(errorlevel=2, message='chatEngine not correctly initialized, aborting daemon')
+        while True:                                                 # Until self._socketClose(self._sock)
+            try:
+                DataInput,_,_ = select.select([self._sock], [], [], self._tcpTimeout)
+                for Input in DataInput:
+                    if Input is self._sock:
+                        try:
+                            Client, Address = self._sock.accept()
+                            Client.settimeout(self._tcpTimeout)     # Client inactivity timeout (1min)
+                            self._reply(Client, Address)            # Only one server connection to just ONE client
+                        except OSError:                             # Client socket closed (not on timeout)
+                            self._debugPrint(Address, "disconnected")
+            except ValueError:                                      # (ValueError < 0)  ->  Daemon server socket closed [DataInput] on server shutdown
+                self._debugPrint(message="daemon shutdown")
+                return
+
+
+    # Close an opened socket
+    def _socketClose(self, tcpSocket):
+        tcpSocket.shutdown(socket.SHUT_RDWR)
+        tcpSocket.close()
+
+
+    # monoclient connection
+    def _reply(self, client, address):
+        self._debugPrint(address, 'connected')
+        client.settimeout(self._tcpTimeout)
+        try:
+            while True:
+                # Parsing input message
+                command = client.recv(self._tcpBufferSize).decode('UTF-8').strip().split(',', 2)
+                self._debugPrint(address, f"< {command}")
+                if len(command) < 2:
+                    self._debugPrint(address, "ERROR: invalid message, closing connection")
+                    self._socketClose(client)
+                    return
+                # Parsing system commands
+                if command[0] == 'sys':
+                    if command[1] == 'shutdown':
+                        self._debugPrint(message="daemon shutdown requested, closing application")
+                        self._socketClose(client)
+                        self._socketClose(self._sock)
+                        return
+                    elif command[1] == 'close':
+                        self._socketClose(client)
+                    else:
+                        self._sendMessage(client, f"ERROR: Invalid system command ({command[1]})")
+                # chatEngine message
+                elif command[0] == 'msg':
+                    if len(command) < 3:
+                        self._sendMessage(client, f"ERROR: Invalid format, must be: 'username,message'")
+                    else:   # Reply to client
+                        self._sendMessage(client, self._engine.message(username=command[1], message=command[2]))
+                # invalid message
+                else:
+                    self._sendMessage(client, f"ERROR: Invalid command ({command})")
+        except socket.timeout:
+            self._debugPrint(address, "disconnected for timeout")
+        self._socketClose(client)
+
+
+    def _debugPrint(self, entity='botserver', message=None):
+        if self.debug:
+            print(f"{str(entity).ljust(21)} {message}")
+
+    def _sendMessage(self, client=None, message=None):
+        self._debugPrint(entity=client.getpeername(), message=f"> {message}")
+        client.send((str(message)+'\n').encode('UTF-8'))
+
+
+if __name__ == '__main__':
+    try:
+        configuration = serverConfiguration()
+        daemon = serverDaemon(configuration, debug=True)
+        daemon.loop()
+    except KeyboardInterrupt:
+        print("\nInterrupt request, daemon aborted\n")

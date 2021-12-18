@@ -1,1 +1,4 @@
+# Python cache files
 __*
+# Unwanted directories
+certs/*

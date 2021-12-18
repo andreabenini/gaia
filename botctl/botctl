@@ -35,7 +35,6 @@ class botCtl:
         except socket.error:
             self.__error('Connection failed')
 
-
     def __init__(self, host=None, port=None, debug=False):
         self.debug = debug
         self.__connect(host=host, port=port)
@@ -51,6 +50,7 @@ class botCtl:
             except socket.error:
                 self.__error(f"Cannot send '{cmd}'")
 
+
 if __name__ == '__main__':
     try: # Parsing params
         parser = argparse.ArgumentParser(description='Bot command line interface')
@@ -65,7 +65,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print("\nInterrupt request, utility aborted\n")
 
-# HOST, PORT = 'example.com', 443
 # def handle(conn):
 #     conn.write(b'GET / HTTP/1.1\n')
 #     print(conn.recv().decode())

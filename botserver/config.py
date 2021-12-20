@@ -35,18 +35,10 @@ class serverConfiguration():
             # Checking existence of Server and CA certs
             dirCertificates = os.path.dirname(self.filename)
             dirCertificates = ('.' if dirCertificates=='' else dirCertificates) + os.path.sep + 'certs' + os.path.sep
-            if os.path.exists(dirCertificates + "CA.crt"):
-                self.caCertificate = dirCertificates + 'CA.crt'
-            else:
-                raise Exception(f"File  {dirCertificates}CA.crt  not found")
-            if os.path.exists(dirCertificates + "CA.pem"):
-                self.caKey = dirCertificates + 'CA.pem'
-            else:
-                raise Exception(f"File  {dirCertificates}CA.pem  not found")
-            if os.path.exists(dirCertificates + "server.pem"):
-                self.serverKey = dirCertificates + 'server.pem'
-            else:
-                raise Exception(f"File  {dirCertificates}server.pem  not found")
+            self.caCertificate      = self.__checkFile(dirCertificates, "ca_cert.pem")
+            # self.caKey              = self.__checkFile(dirCertificates, "ca_key.pem") TODO: is this needed ?
+            self.serverCertificate  = self.__checkFile(dirCertificates, "server_cert.pem")
+            self.serverKey          = self.__checkFile(dirCertificates, "server_key.pem")
 
         except Exception as E:
             self._errorMessage = str(E)
@@ -54,6 +46,11 @@ class serverConfiguration():
         # object loaded successfully
         self._valid = True
 
+    def __checkFile(self, dir, filename):
+        if os.path.exists(dir + filename):
+            return dir+filename
+        else:
+            raise Exception(f"File  {dir}{filename}  not found")
 
     @property
     def filename(self):

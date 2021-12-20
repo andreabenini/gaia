@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+import os
+from socket import send_fds
+from ssl import Purpose
 import sys
 try:
     import ssl
+    import yaml
     import socket
     import argparse
 except ModuleNotFoundError as E:
@@ -11,6 +15,9 @@ except ModuleNotFoundError as E:
     sys.exit(1)
 
 class botCtl:
+    @property
+    def valid(self):
+        return self.__valid
     @property
     def debug(self):
         return self.__debug
@@ -27,18 +34,75 @@ class botCtl:
         print(message)
         sys.exit(1)
 
+    # Load SSL context
+    def __loadSSL(self):
+        try:
+            # self.__context = ssl.SSLContext()
+            self.__context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH, cafile=self.__caCertificate)
+            self.__context.verify_mode = ssl.CERT_REQUIRED
+            # self.__context.load_verify_locations(self.__caCertificate)     # CA certificate with which the client will validate the server certificate
+            self.__context.load_cert_chain(certfile=self.__clientCertificate, keyfile=self.__clientKey)  # Load client certificate
+            # context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # optional
+            # self.__context.check_hostname = False
+        except Exception as E:
+            self.__error(str(E))
+
+    # TCP client connection method
     def __connect(self, host=None, port=None):
         try:
             print(f"Trying {host}:{port}...")
-            self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__socket = self.__context.wrap_socket(self.__clientSocket)  #, server_hostname=self.__host)
             self.__socket.connect((host, port))
-        except socket.error:
-            self.__error('Connection failed')
 
-    def __init__(self, host=None, port=None, debug=False):
-        self.debug = debug
-        self.__connect(host=host, port=port)
-        print(f"Connected to {host}:{port}\n")
+            # TODO: self.__clientSocket.close(), self.__socket.close()
+
+
+            # DEBUG: printme and remove later
+            server_cert = self.__socket.getpeercert()       # Obtain certificate from server
+            if not server_cert:
+                raise Exception('Unable to retrieve server certificate')
+            print(server_cert)
+
+        except Exception as E:
+            self.__error(str(E))
+
+    # Constructor
+    def __init__(self, configuration=None, debug=False):
+        self.__valid = False
+        try:
+            # yaml loading
+            fHandler = open(configuration)
+            if not fHandler: raise Exception(f"Cannot open '{configuration}' file")
+            config = yaml.safe_load(fHandler)
+            fHandler.close()
+            if 'botserverHost' not in config: raise Exception("[botserverHost] not found in configuration file")
+            if 'botserverPort' not in config: raise Exception("[botserverPort] not found in configuration file")
+            self.__host = config['botserverHost']
+            self.__port = int(config['botserverPort'])
+            self.debug = debug
+
+            # Certification files checkings
+            dirCertificates = os.path.dirname(configuration)
+            dirCertificates = ('.' if dirCertificates=='' else dirCertificates) + os.path.sep + 'certs' + os.path.sep
+            self.__caCertificate     = self.__checkFile(dirCertificates, "ca_cert.pem")
+            self.__clientCertificate = self.__checkFile(dirCertificates, "client_cert.pem")
+            self.__clientKey         = self.__checkFile(dirCertificates, "client_key.pem")
+            self.__valid = True
+        except Exception as e:
+            self.__error(str(e))
+
+    def __checkFile(self, dir, filename):
+        if os.path.exists(dir + filename):
+            return dir+filename
+        else:
+            raise Exception(f"File  {dir}{filename}  not found")
+
+
+    def start(self):
+        self.__loadSSL()
+        self.__connect(host=self.__host, port=self.__port)
+        print(f"Connected to {self.__host}:{self.__port}\n")
         cmd = None
         while cmd!='exit' and cmd!='sys,exit' and cmd!='sys,shutdown':
             try:
@@ -54,29 +118,17 @@ class botCtl:
 
 
 if __name__ == '__main__':
-    try: # Parsing params
+    try:
+        # Parsing command line params
         parser = argparse.ArgumentParser(description='Bot command line interface')
-        parser.add_argument('-D', '--debug', dest='debug',   action='store_true', help='Turn on debugging')
-        parser.add_argument('-H', '--host',  metavar='HOST', type=str,  help='Server hostname [default: localhost]', default='127.0.0.1')
-        parser.add_argument('-P', '--port',  metavar='PORT', type=str,  help='Server portname [default: 6667]',      default='6667')
+        parser.add_argument('-d', '--debug',  dest='debug',   action='store_true', help='Turn on debugging')
+        parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str,   help='Client configuration file [default: config.yaml]', default='config.yaml')
         parser.set_defaults(debug=False)
         args = parser.parse_args()
-        # Command line interface console
-        botCommandLine = botCtl(host=args.host, port=int(args.port), debug=args.debug)
 
+        # Command line interface console startup
+        botCommandLine = botCtl(configuration=args.configuration, debug=args.debug)
+        if botCommandLine.valid:
+            botCommandLine.start()
     except KeyboardInterrupt:
         print("\nInterrupt request, utility aborted\n")
-
-# def handle(conn):
-#     conn.write(b'GET / HTTP/1.1\n')
-#     print(conn.recv().decode())
-# def main():
-#     sock = socket.socket(socket.AF_INET)
-#     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-#     context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # optional
-#     conn = context.wrap_socket(sock, server_hostname=HOST)
-#     try:
-#         conn.connect((HOST, PORT))
-#         handle(conn)
-#     finally:
-#         conn.close()

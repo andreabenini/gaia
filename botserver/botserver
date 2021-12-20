@@ -4,7 +4,7 @@
 # Python botserver daemon
 # @see:
 #       Message format:
-#           "sys,command"           System command [commands: exit, shutdown]
+#           "sys,command"           System command [exit, shutdown]
 #           "msg,username,message"  Send message to username
 #
 
@@ -12,6 +12,12 @@
 import sys
 import socket
 import select
+try:
+    import ssl
+except ModuleNotFoundError as E:
+    print(f"{E}. Install required modules.")
+    sys.exit(1)
+
 
 from config     import serverConfiguration
 from chatengine import chatEngine
@@ -35,17 +41,18 @@ class serverDaemon:
         sys.exit(errorlevel)
 
     def __init__(self, config=None, debug=False):
-        if not config.valid:
-            self._exit(f'Configuration file not found or invalid [{configuration.filename}]') 
+        self._config = config
+        if not self._config.valid:
+            self._exit(self._config.errorMessage)
         self.debug = debug
-        # TCP
+        # TCP socket creation
         self._tcpTimeout = 60
         self._tcpBufferSize = 1024
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._sock.bind((config.property['botserverHost'], config.property['botserverPort']))
-        self._sock.listen(1)    # Incoming connection limit (pretty low, local usage only)
-        self._debugPrint(message=f"daemon started {(config.property['botserverHost'], config.property['botserverPort'])}")
+        self._sock.bind((self._config.property['botserverHost'], self._config.property['botserverPort']))
+        self._sock.listen(5)    # Incoming connection limit (pretty low, local usage only)
+        self._debugPrint(message=f"daemon started {(self._config.property['botserverHost'], self._config.property['botserverPort'])}")
 
 
     # Program main loop
@@ -53,18 +60,36 @@ class serverDaemon:
         self._engine = chatEngine()
         if not self._engine.valid:
             self._exit(errorlevel=2, message='chatEngine not correctly initialized, aborting daemon')
-        while True:                                                 # Until self._socketClose(self._sock)
+        # Create SSL context
+        context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH, cafile=self._config.caCertificate)
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.load_cert_chain(self._config.serverCertificate, self._config.serverKey)
+        # Server loop
+        while True:                                                             # Until self._socketClose(self._sock)
             try:
                 DataInput,_,_ = select.select([self._sock], [], [], self._tcpTimeout)
+
                 for Input in DataInput:
                     if Input is self._sock:
                         try:
                             Client, Address = self._sock.accept()
-                            Client.settimeout(self._tcpTimeout)     # Client inactivity timeout (1min)
-                            self._reply(Client, Address)            # Only one server connection to just ONE client
-                        except OSError:                             # Client socket closed (not on timeout)
+                            # TLS, make socket connection to clients secure by using SSL wrapper
+                            secureClientSocket = context.wrap_socket(Client, server_side=True)
+
+                            # Get certificate from client
+                            clientCertificate = secureClientSocket.getpeercert()
+                            if not clientCertificate:
+                                self._debugPrint("Invalid client certificate")
+                                raise OSError()
+
+                            print("DEBUG                 ", end='')
+                            print(clientCertificate)    # DEBUG: Remove this debug line
+
+                            secureClientSocket.settimeout(self._tcpTimeout)     # Client inactivity timeout (1min)
+                            self._reply(secureClientSocket, Address)            # Only one server connection to just ONE client
+                        except OSError:                                         # Client socket closed (not on timeout)
                             self._debugPrint(Address, "disconnected")
-            except ValueError:                                      # (ValueError < 0)  ->  Daemon server socket closed [DataInput] on server shutdown
+            except ValueError:                                                  # (ValueError < 0)  ->  Daemon server socket closed [DataInput] on server shutdown
                 self._debugPrint(message="daemon shutdown")
                 return
 
@@ -82,7 +107,9 @@ class serverDaemon:
         try:
             while True:
                 # Parsing input message
-                command = client.recv(self._tcpBufferSize).decode('UTF-8').strip().split(',', 2)
+                command = client.recv(self._tcpBufferSize)
+                if not command: return
+                command = command.decode('UTF-8').strip().split(',', 2)
                 self._debugPrint(address, f"< {command}")
                 if len(command) < 2:
                     self._debugPrint(address, "ERROR: invalid message, closing connection")

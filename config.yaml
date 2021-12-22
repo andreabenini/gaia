@@ -1,3 +1,8 @@
-botserverHost: "127.0.0.1"
-botserverPort: 6667
+botserverHost: "127.0.0.1"    # BotServer Listening Interface
+botserverPort: 6667           # BotServer TCP Port
+botserverTimeout: 60          # BotServer TCP Socket Timeout
+
+# List of allowed clients
+allowedClients:
+    - botctl
 

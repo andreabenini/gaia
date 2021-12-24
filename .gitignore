@@ -1,5 +1,12 @@
 # Python cache files
 __*
-# Unwanted directories
+# Reserved directories
 certs/*
 db/*
+
+# Python Virtualenv, ignore them
+bin/*
+include/*
+lib/*
+lib64
+pyvenv.cfg

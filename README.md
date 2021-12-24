@@ -1,6 +1,9 @@
 # gaia
 gaia companion bot
 
-# TODO list
-- Secure communication with CA, server and client side secure connection
-- Detect disconnection on client side to avoid timeout troubles
+##### Python Virtualenv, ignore them:
+- _bin_
+- _include_
+- _lib_
+- _lib64 -> lib_
+- _pyvenv.cfg_

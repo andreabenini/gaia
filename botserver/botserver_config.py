@@ -21,11 +21,12 @@ class serverConfiguration():
         parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str, help='Server configuration file [default: config.yaml]', default='config.yaml')
         args = parser.parse_args()
         self._errorMessage = ''
-        self._filename = args.configuration
-        self._path = self._pathDB = self._property = None
-        self._valid = False
+        self.__filename = args.configuration
+        self.__path = self.__pathDB = self._property = None
+        self.__valid = False
         try:
             # yaml loading
+            config = yaml.load(self.filename, Loader=yaml.SafeLoader)
             with open(self.filename, 'r') as fHandler:
                 config = yaml.safe_load(fHandler)
             if 'botserverHost'    not in config: raise Exception("[botserverHost] not found in configuration file")
@@ -37,7 +38,6 @@ class serverConfiguration():
             dirCertificates = os.path.dirname(self.filename)
             dirCertificates = ('.' if dirCertificates=='' else dirCertificates) + os.path.sep + 'certs' + os.path.sep
             self.caCertificate      = self.__checkFile(dirCertificates, "ca_cert.pem")
-            # self.caKey              = self.__checkFile(dirCertificates, "ca_key.pem") TODO: is this needed ?
             self.serverCertificate  = self.__checkFile(dirCertificates, "server_cert.pem")
             self.serverKey          = self.__checkFile(dirCertificates, "server_key.pem")
 
@@ -47,12 +47,12 @@ class serverConfiguration():
             self._errorMessage = str(E)
             return
         # object loaded successfully
-        self._valid = True
+        self.__valid = True
 
     def __initFileSystem(self):
         try:
-            self._pathDB = os.path.dirname(self.filename)
-            self._pathDB = ('.' if self._pathDB=='' else self._pathDB) + os.path.sep + 'db'
+            self.__pathDB = os.path.dirname(self.filename)
+            self.__pathDB = ('.' if self.__pathDB=='' else self.__pathDB) + os.path.sep + 'db'
             if not os.path.exists(self.pathDatabase):
                 os.mkdir(self.pathDatabase)
             if not os.path.isdir(self.pathDatabase):
@@ -68,16 +68,16 @@ class serverConfiguration():
 
     @property
     def path(self):
-        return self._path
+        return self.__path
     @property
     def pathDatabase(self):
-        return self._pathDB
+        return self.__pathDB
     @property
     def filename(self):
-        return self._filename
+        return self.__filename
     @property
     def valid(self):
-        return self._valid
+        return self.__valid
     @property
     def errorMessage(self):
         return self._errorMessage

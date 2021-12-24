@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Barebone chat engine
@@ -7,11 +6,11 @@
 #       self.message()      Send a message to this engine to receive a reply
 #
 
-# Program imports
 try:
-    import os
-    import csv
-    import datetime
+    # Python imports
+    # Program imports
+    import log
+    import users
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
 
@@ -19,35 +18,24 @@ except ModuleNotFoundError as E:
 class chatEngine():
     @property
     def valid(self):
-        return self._valid
+        return self.__valid
     @property
     def error(self):
-        return self._error
+        return self.__error
 
-    # Class constructor
+    # Class constructor/destructor
     def __init__(self, pathDatabase=None):
         try:
-            self._path  = pathDatabase
-            self._logInit()
-            self._logWrite("Engine initialized")
-            self._valid = True
+            self.__path  = pathDatabase
+            self.__log   = log.writer(self.__path)
+            self.__users = users.database(self.__path)
+            self.__log.Write("Engine initialized")
+            self.__valid = True
         except Exception as E:
-            self._error = str(E).strip()
-            self._valid = False
-
-    # Logging methods
-    def _logInit(self):
-        filename = self._path + os.path.sep + 'chat.log'
-        self._logFile = None
-        csvfile = open(filename, 'a+')
-        self._logFile = csv.writer(csvfile, delimiter='|')
-        if self._logFile == None:
-            raise ValueError(f"Cannot open '{filename}' for writing")
-    def _logWrite(self, message1='', message2=None, msgtype='SYSTEM'):
-        logline = [datetime.datetime.strftime(datetime.datetime.now(), '%Y/%m/%d %H:%M:%S'), msgtype, message1]
-        if message2:
-            logline += [message2]
-        self._logFile.writerow(logline)
+            self.__error = str(E).strip()
+            self.__valid = False
+    def __del__(self):
+        print("Exterminate !")
 
 
     # Send a <message> to <username>
@@ -58,7 +46,10 @@ class chatEngine():
     # @return (String) Replied message
     def message(self, username=None, message=None):
         if not username or not message:
-            self._valid = False
+            self.__valid = False
             return None
+        _ = self.__users.user(Username=username)
         # just a stub. Dummy output until I get something useful
-        return f"{username}: {message}"
+        result = f"{username}: {message}"
+        self.__log.Write(msgtype='message', message1=message, message2=result)
+        return result

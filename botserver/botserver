@@ -21,7 +21,7 @@ except ModuleNotFoundError as E:
     sys.exit(1)
 
 # Program includes
-from config     import serverConfiguration
+from botserver_config import serverConfiguration
 from chatengine import chatEngine
 
 
@@ -54,34 +54,34 @@ class serverDaemon:
 
     # Object constructor
     def __init__(self, config=None, debug=DEBUG.OFF):
-        self._config = config
-        if not self._config.valid:
-            self._exit(self._config.errorMessage)
+        self.__config = config
+        if not self.__config.valid:
+            self._exit(self.__config.errorMessage)
         self.debug = debug
         self.__running = True
         # TCP socket creation
-        self._tcpTimeout = self._config.property['botserverTimeout']
-        self._tcpBufferSize = 1024
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._sock.bind((self._config.property['botserverHost'], self._config.property['botserverPort']))
-        self._sock.listen(5)    # Incoming connection limit (pretty low, local usage only)
-        self.__debugPrint(message=f"daemon started {(self._config.property['botserverHost'], self._config.property['botserverPort'])}  [tcp timeout: {self._tcpTimeout}]s", level=DEBUG.INFO)
+        self.__tcpTimeout = self.__config.property['botserverTimeout']
+        self.__tcpBufferSize = 1024
+        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.__sock.bind((self.__config.property['botserverHost'], self.__config.property['botserverPort']))
+        self.__sock.listen(5)    # Incoming connection limit (pretty low, local usage only)
+        self.__debugPrint(message=f"daemon started {(self.__config.property['botserverHost'], self.__config.property['botserverPort'])}  [tcp timeout: {self.__tcpTimeout}]s", level=DEBUG.INFO)
 
     # Program main loop
     def loop(self):
-        self._engine = chatEngine(pathDatabase=self._config.pathDatabase)
+        self._engine = chatEngine(pathDatabase=self.__config.pathDatabase)
         if not self._engine.valid:
             self._exit(errorlevel=2, message=self._engine.error+', chatEngine not initialized, aborting daemon')
         # Create SSL context for creating a secure socket
-        context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH, cafile=self._config.caCertificate)
+        context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH, cafile=self.__config.caCertificate)
         context.verify_mode = ssl.CERT_REQUIRED
-        context.load_cert_chain(self._config.serverCertificate, self._config.serverKey)
+        context.load_cert_chain(self.__config.serverCertificate, self.__config.serverKey)
         # Server loop
-        self._sock.settimeout(self._tcpTimeout)
-        while self.__running:                                                       # Until self.__socketClose(self._sock)
+        self.__sock.settimeout(self.__tcpTimeout)
+        while self.__running:                                                       # Until self.__socketClose(self.__sock)
             try:
-                Client, Address = self._sock.accept()
+                Client, Address = self.__sock.accept()
                 secureClientSocket = context.wrap_socket(Client, server_side=True)  # TLS, make socket connection to clients secure by using SSL wrapper
                 # Get certificate from client and validate it
                 clientCertificate = secureClientSocket.getpeercert(True)
@@ -96,11 +96,11 @@ class serverDaemon:
                                  message=f"[Agent: {x509.get_subject().CN}]   [Expired:{isExpired}, {expiryStart} -> {expiryEnd}]")
                 if isExpired:
                     raise ValueError(f"Client certificate expired [{expiryStart} -> {expiryEnd}], disconnecting")
-                if x509.get_subject().CN not in self._config.property['allowedClients']:
+                if x509.get_subject().CN not in self.__config.property['allowedClients']:
                     raise ValueError(f"Client not allowed, disconnecting")
 
                 # Reply to client
-                secureClientSocket.settimeout(self._tcpTimeout)     # Client inactivity timeout (1min)
+                secureClientSocket.settimeout(self.__tcpTimeout)     # Client inactivity timeout (1min)
                 threading.Thread(target=self.__reply, args=(secureClientSocket, Address) ).start()
             except ValueError as e:
                 entity = Address if Address else '(unknown)'
@@ -121,11 +121,11 @@ class serverDaemon:
     # monoclient connection
     def __reply(self, client, address):
         self.__debugPrint(address, 'connected')
-        client.settimeout(self._tcpTimeout)
+        client.settimeout(self.__tcpTimeout)
         try:
             while True:
                 # Parsing input message
-                command = client.recv(self._tcpBufferSize)
+                command = client.recv(self.__tcpBufferSize)
                 if not command: return
                 command = command.decode('UTF-8').strip().split(',', 2)
                 self.__debugPrint(address, f"< {command}", level=DEBUG.FULL if command == ['sys', 'ping'] else DEBUG.VERBOSE)
@@ -173,7 +173,7 @@ class serverDaemon:
         client.send((str(message)+'\n').encode('UTF-8'))
 
     def __daemonShutdown(self):
-        self.__socketClose(self._sock)
+        self.__socketClose(self.__sock)
         self.__running = False
 
 

@@ -2,3 +2,4 @@
 __*
 # Unwanted directories
 certs/*
+db/*

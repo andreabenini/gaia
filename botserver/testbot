@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# Dummy test program on console, NO TCP server or other fancy frills
+# Raw command line to evaluate just the chat engine
+#
+
+# Python includes
+import sys
+
+# Program includes
+from chatengine import chatEngine
+
+
+# Main
+if __name__ == '__main__':
+    try:
+        engine = chatEngine(pathDatabase="../db")
+        if not engine.valid:
+            print(f'chatEngine not correctly initialized ({engine.error})')
+            sys.exit(1)
+        cmd = ''
+        print("\nTest command console, insert username and start talking")
+        print("Type 'exit' to close program, Ctrl+C to abort\n")
+        username = input('Username> ').strip()
+        if not username or username == '':
+            print("Invalid username")
+            sys.exit(1)
+        while cmd != 'exit':
+            cmd = input("> ").strip()
+            if cmd!=None and cmd!='' and cmd!='exit':
+                print(engine.message(username=username, message=cmd))
+        print()
+    except KeyboardInterrupt:
+        print("\nInterrupt request, program aborted\n")

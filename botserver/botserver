@@ -46,7 +46,8 @@ class serverDaemon:
         else:
             self._debug = DEBUG.OFF
 
-    def _exit(self, message='', errorlevel=1):
+    # Aborting daemon on error
+    def __exit(self, message='', errorlevel=1):
         print("\nERROR: Program aborted")
         if message != '': print(f"ERROR: {message}")
         print("")
@@ -56,7 +57,7 @@ class serverDaemon:
     def __init__(self, config=None, debug=DEBUG.OFF):
         self.__config = config
         if not self.__config.valid:
-            self._exit(self.__config.errorMessage)
+            self.__exit(self.__config.errorMessage)
         self.debug = debug
         self.__running = True
         # TCP socket creation
@@ -72,7 +73,7 @@ class serverDaemon:
     def loop(self):
         self._engine = chatEngine(pathDatabase=self.__config.pathDatabase)
         if not self._engine.valid:
-            self._exit(errorlevel=2, message=self._engine.error+', chatEngine not initialized, aborting daemon')
+            self.__exit(errorlevel=2, message=self._engine.error+', chatEngine not initialized, aborting daemon')
         # Create SSL context for creating a secure socket
         context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH, cafile=self.__config.caCertificate)
         context.verify_mode = ssl.CERT_REQUIRED
@@ -118,7 +119,7 @@ class serverDaemon:
         except OSError:
             pass
 
-    # monoclient connection
+    # Threaded client connection reply
     def __reply(self, client, address):
         self.__debugPrint(address, 'connected')
         client.settimeout(self.__tcpTimeout)
@@ -163,15 +164,17 @@ class serverDaemon:
         except OSError:
             self.__debugPrint(address, "client disconnected")                # No need to close socket
 
-
-    def __debugPrint(self, entity='botserver', message=None, level=DEBUG.DEBUG):
-        if self.debug >= level:
-            print(f"{str(enumNames(DEBUG)[level]).ljust(7)} {str(entity).ljust(21)} {message}")
-
+    # TCP send message back to client
     def __sendMessage(self, client=None, message=None):
         self.__debugPrint(entity=client.getpeername(), message=f"> {message}", level = DEBUG.FULL if message == 'pong' else DEBUG.VERBOSE)
         client.send((str(message)+'\n').encode('UTF-8'))
 
+    # Local debug print on stdout when needed
+    def __debugPrint(self, entity='botserver', message=None, level=DEBUG.DEBUG):
+        if self.debug >= level:
+            print(f"{str(enumNames(DEBUG)[level]).ljust(7)} {str(entity).ljust(21)} {message}")
+
+    # System daemon shutdown
     def __daemonShutdown(self):
         self.__socketClose(self.__sock)
         self.__running = False

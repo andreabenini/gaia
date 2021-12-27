@@ -11,6 +11,7 @@ try:
     # Program imports
     import log
     import users
+    import intent
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
 
@@ -26,14 +27,15 @@ class chatEngine():
     # Class constructor/destructor
     def __init__(self, pathDatabase=None):
         try:
-            self.__path  = pathDatabase
-            self.__log   = log.writer(self.__path)
-            self.__users = users.database(self.__path)
+            self.__path    = pathDatabase
+            self.__log     = log.writer(self.__path)
+            self.__users   = users.database(self.__path)
+            self.__intents = intent.database(self.__path)
+            self.__valid   = True
             self.__log.Write("Engine initialized")
-            self.__valid = True
         except Exception as E:
-            self.__error = str(E).strip()
-            self.__valid = False
+            self.__error   = str(E).strip()
+            self.__valid   = False
     def __del__(self):
         print("Exterminate !")
 

@@ -3,7 +3,7 @@
 #
 # GENERATE - Generate model file 'training_data' based on json files
 #
-
+print("- Loading trainer engine", flush=True)
 import os
 #
 # 0 = all messages are logged (default behavior)
@@ -13,15 +13,16 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 try:
     import nltk
-    import pickle
     import numpy
+    import random
+    import pickle
     import pathlib
+    import datetime
 
     from keras.models import Sequential
     from keras.layers import Dense, Activation, Dropout
     # from keras.optimizers import SGD
-    from tensorflow.keras.optimizers import SGD
-    import random
+    from tensorflow.keras.optimizers import SGD         # type: ignore
 
     import intent
 except ModuleNotFoundError as E:
@@ -29,6 +30,7 @@ except ModuleNotFoundError as E:
 
 
 # Phase [1]. Loading json database
+timeStart = datetime.datetime.now()
 words=[]
 classes = []
 documents = []
@@ -39,6 +41,7 @@ dbPath = str(pathlib.Path(__file__).parent.resolve()) + os.path.sep + ".." + os.
 intents = intent.database(dbPath)
 
 # Phase [2]. Preprocess data
+print("- Preprocess data [words,documents,classes]", flush=True)
 # Words splitting
 for intent in intents.list['intents']:
     for pattern in intent['patterns']:
@@ -53,25 +56,27 @@ words = [lemmatizer.lemmatize(w.lower()) for w in words if w not in ignore_words
 words = sorted(list(set(words)))
 # sort classes list
 classes = sorted(list(set(classes)))
-print("Training model")
-print("-----------------------------------------------------------------------")
+print("- Training model", flush=True)
+print("  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 # documents = combination between patterns and intents
-print(f"- Documents           {len(documents)}")
-print(f"                      {documents}")
+print(f"    - Documents           {len(documents)}")
+print(f"                          {documents}")
 # classes = intents
-print(f"- Classes             {len(classes)}")
-print(f"                      {classes}")
+print(f"    - Classes             {len(classes)}")
+print(f"                          {classes}")
 # words = all words, vocabulary
-print(f"- Lemmatized Words    {len(words)}")
-print(f"                      {words}")
-pickle.dump(words,open(dbPath+os.path.sep+'words.pkl','wb'))
-pickle.dump(classes,open(dbPath+os.path.sep+'classes.pkl','wb'))
+print(f"    - Lemmatized Words    {len(words)}")
+print(f"                          {words}")
+fileWords   = dbPath + os.path.sep + 'words.pkl'
+fileClasses = dbPath+os.path.sep+'classes.pkl'
+pickle.dump(words,open(fileWords,'wb'))
+pickle.dump(classes,open(fileClasses,'wb'))
 
 
 # Phase [3]. Create training and testing data
 print()
-print("Creating training data", flush=True)
-print("-----------------------------------------------------------------------")
+print("- Creating training data", flush=True)
+print("  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 # create our training data
 training = []
 # create an empty array for our output
@@ -101,7 +106,7 @@ training = numpy.array(training, dtype=object)
 # create train and test lists. X - patterns, Y - intents
 train_x = list(training[:,0])
 train_y = list(training[:,1])
-print("- Training data created")
+print("    - Training data created")
 
 # Phase [4]. Build the model
 # Create model - 3 layers. First layer 128 neurons, second layer 64 neurons and 3rd output layer contains number of neurons
@@ -119,7 +124,24 @@ model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy
 
 # Fitting and saving the model 
 hist = model.fit(numpy.array(train_x), numpy.array(train_y), epochs=200, batch_size=5, verbose=0)
-model.save(dbPath+os.path.sep+'model.h5', hist)
+fileModel = dbPath + os.path.sep + 'model.h5'
+model.save(fileModel, hist)
 
-print("- Model saved as 'model.h5'")
+print("    - Model saved")
+print(f"        {fileWords}")
+print(f"        {fileClasses}")
+print(f"        {fileModel}")
+
+timeEnd  = datetime.datetime.now()
+timeDiff = timeEnd - timeStart
+timeDiffSeconds = timeDiff.total_seconds()
+days    = divmod(timeDiffSeconds, 86400)      # Get days (without [0]!)
+hours   = divmod(days[1], 3600)               # Use remainder of days to calc hours
+minutes = divmod(hours[1], 60)                # Use remainder of hours to calc minutes
+seconds = divmod(minutes[1], 1)               # Use remainder of minutes to calc seconds
+print()
+print("- Generation completed in:  {days} days, {hours} hours, {minutes} minutes, {seconds} seconds".format(
+      days=int(days[0]), hours=int(hours[0]), minutes=int(minutes[0]), seconds=seconds[0]))
+print("    Start   {}".format(str(timeStart)))
+print("    End     {}".format(str(timeEnd)))
 print()

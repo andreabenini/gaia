@@ -71,9 +71,10 @@ class serverDaemon:
 
     # Program main loop
     def loop(self):
-        self._engine = chatEngine(pathDatabase=self.__config.pathDatabase)
-        if not self._engine.valid:
-            self.__exit(errorlevel=2, message=self._engine.error+', chatEngine not initialized, aborting daemon')
+        self.__debugPrint(message="Loading chat engine")
+        self.__engine = chatEngine(pathDatabase=self.__config.pathDatabase)
+        if not self.__engine.valid:
+            self.__exit(errorlevel=2, message=self.__engine.error+', chatEngine not initialized, aborting daemon')
         # Create SSL context for creating a secure socket
         context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH, cafile=self.__config.caCertificate)
         context.verify_mode = ssl.CERT_REQUIRED
@@ -154,7 +155,7 @@ class serverDaemon:
                     if len(command) < 3:
                         self.__sendMessage(client, f"ERROR: Invalid format, must be: 'username,message'")
                     else:   # Reply to client
-                        self.__sendMessage(client, self._engine.message(username=command[1], message=command[2]))
+                        self.__sendMessage(client, self.__engine.message(username=command[1], message=command[2]))
                 # invalid message
                 else:
                     self.__sendMessage(client, f"ERROR: Invalid command ({command})")

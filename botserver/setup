@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# SETUP - Import and download all required settings for this project
+#
+
+# System imports
+import os
+import sys
+print("- Checking required project imports", flush=True)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+try:
+    import nltk
+    import numpy
+    import keras
+    import pickle
+    import tensorflow
+except ModuleNotFoundError as E:
+    print(f"{E}. Install required modules.")
+    sys.exit(1)
+
+# Downloading additional data, when needed
+print("- Downloading NLTK data requirements", flush=True)
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+nltk.download('snowball_data')
+
+print("- Setup completed, now you're ready to train your model\n")

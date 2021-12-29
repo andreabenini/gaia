@@ -4,31 +4,69 @@
 # Dummy test program on console, NO TCP server or other fancy frills
 # Raw command line to evaluate just the chat engine
 #
-
-# Python includes
+import os
 import sys
+print("Loading...", flush=True)
+try:
+    # Python includes
+    import pathlib
+    import argparse
+    
+    # Program includes
+    from chatengine import chatEngine
+except ModuleNotFoundError as E:
+    print(f"{E}. Install required modules.")
+    sys.exit(1)
 
-# Program includes
-from chatengine import chatEngine
+def printHelp():
+    print()
+    print("'.'      to repeat last command")
+    print("'reload' to reload knowledge database")
+    print("'help'   print this help")
+    print("'exit'   to close program")
+    print("<msg>    message to send to chatbot")
+    print("Ctrl+C   to abort\n")
 
 
 # Main
 if __name__ == '__main__':
     try:
-        engine = chatEngine(pathDatabase="../db")
+        # Input
+        parser = argparse.ArgumentParser(description='Chatbot test console')
+        parser.add_argument('-U', '--username', metavar='USER', type=str, help='Username upon login', default='')
+        args = parser.parse_args()
+        username = args.username.strip()
+        if username == '':
+            username = input('Username> ').strip()
+            if not username or username == '' or username=='exit':
+                print("Invalid username")
+                sys.exit(1)
+
+        # Chat engine setup
+        dbPath = str(pathlib.Path(__file__).parent.resolve()) + os.path.sep + ".." + os.path.sep + "db"
+        engine = chatEngine(pathDatabase=dbPath, debug=True)
         if not engine.valid:
             print(f'chatEngine not correctly initialized ({engine.error})')
             sys.exit(1)
         cmd = ''
-        print("\nTest command console, insert username and start talking")
-        print("Type 'exit' to close program, Ctrl+C to abort\n")
-        username = input('Username> ').strip()
-        if not username or username == '':
-            print("Invalid username")
-            sys.exit(1)
+        print("\nTest command console, just insert username and start talking")
+        printHelp()
+
+        # Main loop
+        print(f"[username: {username}]")
         while cmd != 'exit':
+            cmdLast = cmd
             cmd = input("> ").strip()
-            if cmd!=None and cmd!='' and cmd!='exit':
+            if cmd == '.':
+                cmd = cmdLast
+            if not cmd or cmd == '' or cmd == 'exit':
+                pass
+            elif cmd == 'help':
+                printHelp()
+            elif cmd == 'reload':
+                print("Reloading database engine")
+                engine.reload()
+            else:
                 print(engine.message(username=username, message=cmd))
         print()
     except KeyboardInterrupt:

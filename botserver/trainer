@@ -22,11 +22,12 @@ try:
     import pathlib
 
     from keras.models import Sequential
-    from keras.layers import Dense, Activation, Dropout
+    from keras.layers import Dense, Dropout
     # from keras.optimizers import SGD
     from tensorflow.keras.optimizers import SGD         # type: ignore
 
     import intent
+    import defines
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
     sys.exit(1)
@@ -69,8 +70,8 @@ print(f"                          {classes}")
 # words = all words, vocabulary
 print(f"    - Lemmatized Words    {len(words)}")
 print(f"                          {words}")
-fileWords   = dbPath + os.path.sep + 'words.pkl'
-fileClasses = dbPath+os.path.sep+'classes.pkl'
+fileWords   = dbPath + os.path.sep + defines.FILE_WORDS
+fileClasses = dbPath + os.path.sep + defines.FILE_CLASSES
 pickle.dump(words,open(fileWords,'wb'))
 pickle.dump(classes,open(fileClasses,'wb'))
 
@@ -126,13 +127,13 @@ model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy
 
 # Fitting and saving the model 
 hist = model.fit(numpy.array(train_x), numpy.array(train_y), epochs=200, batch_size=5, verbose=0)
-fileModel = dbPath + os.path.sep + 'model.h5'
+fileModel = dbPath + os.path.sep + defines.FILE_MODEL
 model.save(fileModel, hist)
 
 print("    - Model saved")
-print(f"        {fileWords}")
-print(f"        {fileClasses}")
-print(f"        {fileModel}")
+print(f"        Words {fileWords}")
+print(f"        Class {fileClasses}")
+print(f"        Model {fileModel}")
 
 timeEnd  = datetime.datetime.now()
 timeDiff = timeEnd - timeStart

@@ -5,6 +5,9 @@
 #
 print("- Loading trainer engine", flush=True)
 import os
+import sys
+import datetime
+timeStart = datetime.datetime.now()
 #
 # 0 = all messages are logged (default behavior)
 # 1 = INFO messages are not printed
@@ -17,7 +20,6 @@ try:
     import random
     import pickle
     import pathlib
-    import datetime
 
     from keras.models import Sequential
     from keras.layers import Dense, Activation, Dropout
@@ -27,15 +29,15 @@ try:
     import intent
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
+    sys.exit(1)
 
 
 # Phase [1]. Loading json database
-timeStart = datetime.datetime.now()
-words=[]
-classes = []
-documents = []
-ignore_words = ['?', '!']
-lemmatizer = nltk.stem.WordNetLemmatizer()
+words           = []                                    # Set of words in all [intents]
+classes         = []                                    # List of unique tags in [intents]
+documents       = []                                    # Tuple of sentences for each tag in [intents]
+ignore_words    = ['?', '!']                            # Ignore these words from learning process
+lemmatizer      = nltk.stem.WordNetLemmatizer()         # I'm using a lemmatizer, a stemmer is not ideal in this case
 
 dbPath = str(pathlib.Path(__file__).parent.resolve()) + os.path.sep + ".." + os.path.sep + "db"
 intents = intent.database(dbPath)
@@ -141,7 +143,7 @@ minutes = divmod(hours[1], 60)                # Use remainder of hours to calc m
 seconds = divmod(minutes[1], 1)               # Use remainder of minutes to calc seconds
 print()
 print("- Generation completed in:  {days} days, {hours} hours, {minutes} minutes, {seconds} seconds".format(
-      days=int(days[0]), hours=int(hours[0]), minutes=int(minutes[0]), seconds=seconds[0]))
+      days=int(days[0]), hours=int(hours[0]), minutes=int(minutes[0]), seconds=int(seconds[0])))
 print("    Start   {}".format(str(timeStart)))
 print("    End     {}".format(str(timeEnd)))
 print()

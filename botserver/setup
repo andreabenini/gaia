@@ -10,6 +10,7 @@ import sys
 print("- Checking required project imports", flush=True)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 try:
+    import yaml
     import nltk
     import numpy
     import keras
@@ -21,9 +22,10 @@ except ModuleNotFoundError as E:
 
 # Downloading additional data, when needed
 print("- Downloading NLTK data requirements", flush=True)
+# nltk.download()   Use this one to get a XWindow GUI interface to pick your favorite database
 nltk.download('punkt')
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 nltk.download('snowball_data')
 
-print("- Setup completed, now you're ready to train your model\n")
+print("\n- Setup completed, now you're ready to train your model\n")

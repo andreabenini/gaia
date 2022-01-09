@@ -2,7 +2,7 @@
 gaia companion bot
 
 #### Requirements
-- `pip install pickle nltk pickle5 keras tensorflow`
+- Use `botserver/setup` script to check required python packages, **VirtualEnv** is highly suggested.
 
 
 

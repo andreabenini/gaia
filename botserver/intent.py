@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# chat engine log class
+# Load available intents (*.json) from [./db] directory
 #
 
 # Program imports

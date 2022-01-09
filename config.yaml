@@ -3,7 +3,7 @@ botserverPort: 6667             # BotServer TCP Port
 botserverTimeout: 60            # BotServer TCP Socket Timeout
 
 language:                       # bot language for lemmatizer, now it's supported just one language
-    - "it"
+    - it
 
 # List of allowed clients, with certificates (common name: CN)
 allowedClients:

@@ -3,6 +3,7 @@ __*
 # Reserved directories
 certs/*
 db/*
+tmp/*
 
 # Python Virtualenv, ignore them
 bin/*

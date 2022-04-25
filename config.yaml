@@ -1,8 +1,10 @@
-botserverHost: "127.0.0.1"    # BotServer Listening Interface
-botserverPort: 6667           # BotServer TCP Port
-botserverTimeout: 60          # BotServer TCP Socket Timeout
+botserverHost: "127.0.0.1"      # BotServer Listening Interface
+botserverPort: 6667             # BotServer TCP Port
+botserverTimeout: 60            # BotServer TCP Socket Timeout
 
-# List of allowed clients (common name: CN)
+language:                       # bot language for lemmatizer, now it's supported just one language
+    - it
+
+# List of allowed clients, with certificates (common name: CN)
 allowedClients:
     - botctl
-

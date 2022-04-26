@@ -6,10 +6,12 @@
 # Program imports
 try:
     import os
+    import sys
     import csv
     import datetime
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
+    sys.exit(1)
 
 # chat engine log writer [import log=log.writer()]
 class writer():

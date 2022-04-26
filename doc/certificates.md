@@ -1,5 +1,5 @@
 # Generate CA, server and client certificates
-HOWTO generate a CA, a server and a client certificate for it, basically everything you need to get your hands dirty:
+**HOWTO** generate a CA, a server and a client certificate for it, basically everything you need to get your hands dirty:
 ```sh
 # Create to keys directory...
 mkdir -p certs
@@ -37,5 +37,4 @@ openssl s_server -CAfile certs/ca_cert.pem -cert certs/server_cert.pem -key cert
 ```
 openssl s_client -CAfile certs/ca_cert.pem -cert client/client_cert.pem -key client/client_key.pem
 ```
-Once the negotiation is complete, any line you type is sent over to the other side.
-By line, I mean some text followed by a keyboard return press.
+Once the negotiation is complete, any line+[return] you type is sent over to the other side.

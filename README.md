@@ -1,17 +1,18 @@
-# gaia
+# gaia bot
 gaia companion bot
 
-#### Requirements
-- Use `botserver/setup` script to check required python packages, **VirtualEnv** is highly suggested.
+### Tools
+- `./botserver/setup` script to check required python packages, **VirtualEnv** is highly suggested.
+- `./botserver/botserver`, `./chatbot` to start the chatbot server
+- `./botctl` command line client utility
 
+### Configuration
+- `config.yaml`
+- `certs` dir. CA, Server & Clients certifications
+- `db` dir. Chatbot knowledge and learning database
 
-
-##### Python Virtualenv, ignore them:
-- _bin_
-- _include_
-- _lib_
-- _lib64 -> lib_
-- _pyvenv.cfg_
+### Documentation
+- `doc` dir. Various documents related to this project
 
 
 ### TODOs

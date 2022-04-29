@@ -31,16 +31,11 @@ def printHelp():
 # Main
 if __name__ == '__main__':
     try:
-        # Input
+        # Command line arguments
         parser = argparse.ArgumentParser(description='Chatbot test console')
         parser.add_argument('-U', '--username', metavar='USER', type=str, help='Username upon login', default='')
         args = parser.parse_args()
         username = args.username.strip()
-        if username == '':
-            username = input('Username> ').strip()
-            if not username or username == '' or username=='exit':
-                print("Invalid username")
-                sys.exit(1)
 
         # Chat engine setup
         dbPath = str(pathlib.Path(__file__).parent.resolve()) + os.path.sep + ".." + os.path.sep + "db"
@@ -49,7 +44,13 @@ if __name__ == '__main__':
             print(f'chatEngine not correctly initialized ({engine.error})')
             sys.exit(1)
         cmd = ''
-        print("\nTest command console, just insert username and start talking")
+        # Input username
+        print("\nTest command console, just write your username and start talking")
+        if not username:
+            username = input('Username> ').strip()
+            if not username or username == '' or username=='exit':
+                print("Invalid username")
+                sys.exit(1)
         printHelp()
 
         # Main loop

@@ -4,7 +4,7 @@
 # Python botserver daemon
 # @see:
 #       Message format:
-#           "sys,command"           System command [exit, shutdown]
+#           "sys,command"           System command [exit, shutdown, ping]
 #           "msg,username,message"  Send message to username
 #
 

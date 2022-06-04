@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+#   botctl - Bot Command Line Utility
+#
 import os
 import sys
 import time

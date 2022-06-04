@@ -92,7 +92,7 @@ class chatEngine():
         # filter out predictions below a threshold
         p = self.__bow(message)
         res = self.__model.predict(numpy.array([p]))[0]
-        ERROR_THRESHOLD = 0.25
+        ERROR_THRESHOLD = 0.25      # FIXME: Set it as a parameter
         results = [[i,r] for i,r in enumerate(res) if r>ERROR_THRESHOLD]
         # sort by strength of probability
         results.sort(key=lambda x: x[1], reverse=True)

@@ -16,12 +16,15 @@ except ModuleNotFoundError as E:
 
 # Parsing input arguments
 class serverConfiguration():
-    def __init__(self):
-        parser = argparse.ArgumentParser(prog='botserver', description='Botserver internal daemon')
-        parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str, help='Server configuration file [default: config.yaml]', default='config.yaml')
-        args = parser.parse_args()
+    def __init__(self, configFile=None):
         self._errorMessage = ''
-        self.__filename = args.configuration
+        if not configFile:
+            parser = argparse.ArgumentParser(prog='botserver', description='Botserver internal daemon')
+            parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str, help='Server configuration file [default: config.yaml]', default='config.yaml')
+            args = parser.parse_args()
+            self.__filename = args.configuration
+        else:
+            self.__filename = configFile
         self.__path = self.__pathDB = self._property = None
         self.__valid = False
         try:
@@ -33,6 +36,7 @@ class serverConfiguration():
             if 'botserverPort'    not in config: raise Exception("[botserverPort] not found in configuration file")
             if 'allowedClients'   not in config: raise Exception("[allowedClients] not found in configuration file")
             if 'botserverTimeout' not in config: config['botserverTimeout'] = 30
+            if 'language'         not in config: config['language'] = ['en']        # Default language if not defined
             self._property = config
             # Checking existence of Server and CA certs
             dirCertificates = os.path.dirname(self.filename)

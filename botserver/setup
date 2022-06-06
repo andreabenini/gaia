@@ -16,6 +16,7 @@ try:
     import keras
     import pickle
     import tensorflow
+    import simplemma    
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
     sys.exit(1)

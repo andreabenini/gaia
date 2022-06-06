@@ -15,19 +15,23 @@ timeStart = datetime.datetime.now()
 # 3 = INFO, WARNING, and ERROR messages are not printed
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 try:
+    # System libraries
     import nltk
     import numpy
     import random
     import pickle
     import pathlib
-
+    import simplemma
     from keras.models import Sequential
     from keras.layers import Dense, Dropout
     # from keras.optimizers import SGD
     from tensorflow.keras.optimizers import SGD         # type: ignore
 
+    # Program defines
     import intent
     import defines
+    from   botserver_config import serverConfiguration
+
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
     sys.exit(1)
@@ -38,10 +42,17 @@ words           = []                                    # Set of words in all [i
 classes         = []                                    # List of unique tags in [intents]
 documents       = []                                    # Tuple of sentences for each tag in [intents]
 ignore_words    = ['?', '!']                            # Ignore these words from learning process
-lemmatizer      = nltk.stem.WordNetLemmatizer()         # I'm using a lemmatizer, a stemmer is not ideal in this case
-
 dbPath = str(pathlib.Path(__file__).parent.resolve()) + os.path.sep + ".." + os.path.sep + "db"
 intents = intent.database(dbPath)
+# Loading lemmatizer (localized): [languageData] dictionary, using simplemma.lemmatize() directly
+# I'm using a lemmatizer, a stemmer is not ideal in this case
+languageData = None
+try:
+    serverConfig = serverConfiguration(configFile='../config.yaml')
+    languageData = simplemma.load_data(*(serverConfig.property['language']))
+except Exception as E:
+    print(f"{E}. Cannot load configuration from botserver [config.yaml] file")
+    sys.exit(1)
 
 # Phase [2]. Preprocess data
 print("- Preprocess data [words,documents,classes]", flush=True)
@@ -55,7 +66,7 @@ for intent in intents.list['intents']:
         if intent['tag'] not in classes:
             classes.append(intent['tag'])
 # lemmatize and lower each word and remove duplicates
-words = [lemmatizer.lemmatize(w.lower()) for w in words if w not in ignore_words]
+words = [simplemma.lemmatize(w.lower(), languageData) for w in words if w not in ignore_words]
 words = sorted(list(set(words)))
 # sort classes list
 classes = sorted(list(set(classes)))
@@ -92,7 +103,7 @@ for doc in documents:
     # list of tokenized words for the pattern
     pattern_words = doc[0]
     # lemmatize each word - create base word, in attempt to represent related words
-    pattern_words = [lemmatizer.lemmatize(word.lower()) for word in pattern_words]
+    pattern_words = [simplemma.lemmatize(word.lower(), languageData) for word in pattern_words]
     # create our bag of words array with 1, if word match found in current pattern
     for w in words:
         bag.append(1) if w in pattern_words else bag.append(0)

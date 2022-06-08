@@ -3,6 +3,10 @@
 #
 # trainer - Generate model file 'training_data' based on json files
 #
+# @see      Useful links
+#           - https://github.com/adbar/simplemma/
+#             https://adrien.barbaresi.eu/blog/simple-multilingual-lemmatizer-python.html
+#
 print("- Loading trainer engine", flush=True)
 import os
 import sys

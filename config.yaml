@@ -6,6 +6,8 @@ language:                       # bot language for lemmatizer
     - it
     - en
 
+chatThreshold: 0.25             # chatbot recognition threshold
+
 # List of allowed clients, with certificates (common name: CN)
 allowedClients:
     - botctl

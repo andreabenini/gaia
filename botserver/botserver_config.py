@@ -6,13 +6,8 @@
 
 # Program imports
 import os
-import sys
+import yaml
 import argparse
-try:
-    import yaml
-except ModuleNotFoundError as E:
-    print(f"{E}. Install required modules.")
-    sys.exit(1)
 
 # Parsing input arguments
 class serverConfiguration():
@@ -25,7 +20,7 @@ class serverConfiguration():
             self.__filename = args.configuration
         else:
             self.__filename = configFile
-        self.__path = self.__pathDB = self._property = None
+        self.__path = self.__pathDB = self.__property = None
         self.__valid = False
         try:
             # yaml loading
@@ -36,8 +31,9 @@ class serverConfiguration():
             if 'botserverPort'    not in config: raise Exception("[botserverPort] not found in configuration file")
             if 'allowedClients'   not in config: raise Exception("[allowedClients] not found in configuration file")
             if 'botserverTimeout' not in config: config['botserverTimeout'] = 30
+            if 'chatThreshold'    not in config: config['chatThreshold'] = 0.25     # Recognition threshold
             if 'language'         not in config: config['language'] = ['en']        # Default language if not defined
-            self._property = config
+            self.__property = config
             # Checking existence of Server and CA certs
             dirCertificates = os.path.dirname(self.filename)
             dirCertificates = ('.' if dirCertificates=='' else dirCertificates) + os.path.sep + 'certs' + os.path.sep
@@ -61,6 +57,9 @@ class serverConfiguration():
                 os.mkdir(self.pathDatabase)
             if not os.path.isdir(self.pathDatabase):
                 raise ValueError(f'{self.pathDatabase} is not a directory')
+            # Create .yaml config file if it doesn't exists
+            if not os.path.isfile(self.filename):
+                yaml.dump(self.property, self.filename)
         except Exception as E:
             raise ValueError(str(E))
 
@@ -87,4 +86,4 @@ class serverConfiguration():
         return self._errorMessage
     @property
     def property(self):
-        return self._property
+        return self.__property

@@ -183,8 +183,7 @@ class serverDaemon:
 
 if __name__ == '__main__':
     try:
-        configuration = serverConfiguration()
-        daemon = serverDaemon(configuration, debug=DEBUG.VERBOSE)
+        daemon = serverDaemon(serverConfiguration(), debug=DEBUG.VERBOSE)
         daemon.loop()
     except KeyboardInterrupt:
         print("\nInterrupt request, daemon aborted\n")

@@ -11,7 +11,6 @@ try:
     # Python includes
     import pathlib
     import argparse
-    
     # Program includes
     from chatengine import chatEngine
 except ModuleNotFoundError as E:
@@ -38,8 +37,7 @@ if __name__ == '__main__':
         username = args.username.strip()
 
         # Chat engine setup
-        dbPath = str(pathlib.Path(__file__).parent.resolve()) + os.path.sep + ".." + os.path.sep + "db"
-        engine = chatEngine(pathDatabase=dbPath, debug=True)
+        engine = chatEngine(pathProgram=str(pathlib.Path(__file__).parent.resolve())+os.path.sep+"..", debug=True)
         if not engine.valid:
             print(f'chatEngine not correctly initialized ({engine.error})')
             sys.exit(1)

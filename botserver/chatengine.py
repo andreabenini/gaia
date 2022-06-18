@@ -26,6 +26,7 @@ try:
     import users
     import intent
     import defines
+    from   botserver_config import serverConfiguration
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
     sys.exit(1)
@@ -41,25 +42,28 @@ class chatEngine():
         return self.__error
 
     # Class constructor/destructor
-    def __init__(self, pathDatabase=None, debug=False):
+    def __init__(self, pathProgram=None, debug=False):
         try:
-            self.__path       = pathDatabase
-            self.__log        = log.writer(self.__path)
+            self.__pathDb     = pathProgram + os.path.sep + "db"
+            self.__log        = log.writer(self.__pathDb)
             self.__debugMode  = debug
             self.reload()
             self.__valid      = True
             self.__log.Write("Engine initialized")
+            config = serverConfiguration(configFile= pathProgram+os.path.sep+defines.FILE_CONFIG)
+            if not config.valid: raise Exception(config.error)
+            self.__threshold  = config.property['chatThreshold']
         except Exception as E:
             self.__error   = str(E).strip()
             self.__valid   = False
 
 
     def reload(self):
-        self.__users      = users.database(self.__path)
-        self.__intents    = intent.database(self.__path)
-        self.__model      = keras.models.load_model(self.__path + os.path.sep + defines.FILE_MODEL)
-        self.__words      = pickle.load(open(self.__path + os.path.sep + defines.FILE_WORDS, 'rb'))
-        self.__classes    = pickle.load(open(self.__path + os.path.sep + defines.FILE_CLASSES, 'rb'))
+        self.__users      = users.database(self.__pathDb)
+        self.__intents    = intent.database(self.__pathDb)
+        self.__model      = keras.models.load_model(self.__pathDb + os.path.sep + defines.FILE_MODEL)
+        self.__words      = pickle.load(open(self.__pathDb + os.path.sep + defines.FILE_WORDS, 'rb'))
+        self.__classes    = pickle.load(open(self.__pathDb + os.path.sep + defines.FILE_CLASSES, 'rb'))
         self.__lemmatizer = nltk.stem.WordNetLemmatizer()
 
 
@@ -92,8 +96,7 @@ class chatEngine():
         # filter out predictions below a threshold
         p = self.__bow(message)
         res = self.__model.predict(numpy.array([p]))[0]
-        ERROR_THRESHOLD = 0.25      # FIXME: Set it as a parameter
-        results = [[i,r] for i,r in enumerate(res) if r>ERROR_THRESHOLD]
+        results = [[i,r] for i,r in enumerate(res) if r>self.__threshold]
         # sort by strength of probability
         results.sort(key=lambda x: x[1], reverse=True)
         return_list = []

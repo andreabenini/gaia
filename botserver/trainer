@@ -28,14 +28,13 @@ try:
     import simplemma
     from keras.models import Sequential
     from keras.layers import Dense, Dropout
-    # from keras.optimizers import SGD
+    # from keras.optimizers import SGD [type: ignore, get a rid of vscode linter warnings]
     from tensorflow.keras.optimizers import SGD         # type: ignore
 
     # Program defines
     import intent
     import defines
     from   botserver_config import serverConfiguration
-
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
     sys.exit(1)

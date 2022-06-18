@@ -18,6 +18,7 @@ except ModuleNotFoundError as E:
     print(f"{E}. Install required module.")
     sys.exit(1)
 
+from botserver import defines
 
 TCP_SOCKET_TIMEOUT = 5
 
@@ -169,7 +170,7 @@ if __name__ == '__main__':
         # Parsing command line params
         parser = argparse.ArgumentParser(description='Bot command line interface')
         parser.add_argument('-d', '--debug',  dest='debug',   action='store_true', help='Turn on debugging')
-        parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str,   help='Client configuration file [default: config.yaml]', default='config.yaml')
+        parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str,   help=f'Client configuration file [default: {defines.FILE_CONFIG}]', default=defines.FILE_CONFIG)
         parser.set_defaults(debug=False)
         args = parser.parse_args()
 

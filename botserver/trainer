@@ -51,10 +51,10 @@ intents = intent.database(dbPath)
 # I'm using a lemmatizer, a stemmer is not ideal in this case
 languageData = None
 try:
-    serverConfig = serverConfiguration(configFile='../config.yaml')
+    serverConfig = serverConfiguration(configFile = '..' + os.path.sep + defines.FILE_CONFIG)
     languageData = simplemma.load_data(*(serverConfig.property['language']))
 except Exception as E:
-    print(f"{E}. Cannot load configuration from botserver [config.yaml] file")
+    print(f"{E}. Cannot load configuration from botserver [{defines.FILE_CONFIG}] file")
     sys.exit(1)
 
 # Phase [2]. Preprocess data

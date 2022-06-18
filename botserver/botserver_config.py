@@ -4,18 +4,21 @@
 # Python botserver daemon
 #
 
-# Program imports
+# Python imports
 import os
 import yaml
 import argparse
 
+# Program imports
+import defines
+
 # Parsing input arguments
 class serverConfiguration():
     def __init__(self, configFile=None):
-        self._errorMessage = ''
+        self.__error = ''
         if not configFile:
             parser = argparse.ArgumentParser(prog='botserver', description='Botserver internal daemon')
-            parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str, help='Server configuration file [default: config.yaml]', default='config.yaml')
+            parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str, help=f'Server configuration file [default: {defines.FILE_CONFIG}]', default=defines.FILE_CONFIG)
             args = parser.parse_args()
             self.__filename = args.configuration
         else:
@@ -25,6 +28,7 @@ class serverConfiguration():
         try:
             # yaml loading
             config = yaml.load(self.filename, Loader=yaml.SafeLoader)
+            if not os.path.isfile(self.filename): raise Exception(f"Configuration file '{self.filename}' not found")
             with open(self.filename, 'r') as fHandler:
                 config = yaml.safe_load(fHandler)
             if 'botserverHost'    not in config: raise Exception("[botserverHost] not found in configuration file")
@@ -40,26 +44,23 @@ class serverConfiguration():
             self.caCertificate      = self.__checkFile(dirCertificates, "ca_cert.pem")
             self.serverCertificate  = self.__checkFile(dirCertificates, "server_cert.pem")
             self.serverKey          = self.__checkFile(dirCertificates, "server_key.pem")
-
-            self.__initFileSystem()                         # Program path and dir init
-
+            self.__initFileSystem()                                                 # Program path and dir init
         except Exception as E:
-            self._errorMessage = str(E)
+            self.__error = str(E)
             return
         # object loaded successfully
         self.__valid = True
 
     def __initFileSystem(self):
         try:
-            self.__pathDB = os.path.dirname(self.filename)
-            self.__pathDB = ('.' if self.__pathDB=='' else self.__pathDB) + os.path.sep + 'db'
+            self.__path = os.path.dirname(self.filename)
+            if self.__path=='':
+                self.__path = '.'
+            self.__pathDB = self.path + os.path.sep + 'db'
             if not os.path.exists(self.pathDatabase):
                 os.mkdir(self.pathDatabase)
             if not os.path.isdir(self.pathDatabase):
                 raise ValueError(f'{self.pathDatabase} is not a directory')
-            # Create .yaml config file if it doesn't exists
-            if not os.path.isfile(self.filename):
-                yaml.dump(self.property, self.filename)
         except Exception as E:
             raise ValueError(str(E))
 
@@ -82,8 +83,8 @@ class serverConfiguration():
     def valid(self):
         return self.__valid
     @property
-    def errorMessage(self):
-        return self._errorMessage
+    def error(self):
+        return self.__error
     @property
     def property(self):
         return self.__property

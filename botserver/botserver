@@ -57,7 +57,7 @@ class serverDaemon:
     def __init__(self, config=None, debug=DEBUG.OFF):
         self.__config = config
         if not self.__config.valid:
-            self.__exit(self.__config.errorMessage)
+            self.__exit(message=self.__config.error)
         self.debug = debug
         self.__running = True
         # TCP socket creation
@@ -72,7 +72,7 @@ class serverDaemon:
     # Program main loop
     def loop(self):
         self.__debugPrint(message="Loading chat engine")
-        self.__engine = chatEngine(pathDatabase=self.__config.pathDatabase)
+        self.__engine = chatEngine(pathProgram=self.__config.path)
         if not self.__engine.valid:
             self.__exit(errorlevel=2, message=self.__engine.error+', chatEngine not initialized, aborting daemon')
         # Create SSL context for creating a secure socket
@@ -183,7 +183,7 @@ class serverDaemon:
 
 if __name__ == '__main__':
     try:
-        daemon = serverDaemon(serverConfiguration(), debug=DEBUG.VERBOSE)
+        daemon = serverDaemon(config=serverConfiguration(), debug=DEBUG.VERBOSE)
         daemon.loop()
     except KeyboardInterrupt:
         print("\nInterrupt request, daemon aborted\n")

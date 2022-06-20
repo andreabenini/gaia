@@ -26,15 +26,15 @@ class database():
             fHandler.close()
         if not self.__db or self.__db==[] or self.__db=='':
             self.__db = {}
-        atexit.register(self.destructor)
+        atexit.register(self.destructor)        # Save volatile data when the engine shuts down
 
-    def destructor(self):           # Don't use __del__(), use this hack instead
+    def destructor(self):                       # Don't use __del__(), use this hack instead
         with open(self.__filename, 'w') as fHandler:
             yaml.dump(self.__db, fHandler)
 
 
     # Return user info from database
-    def user(self, Username=None):
+    def data(self, Username=None):
         if not Username:
             return None
         if not Username in self.__db:

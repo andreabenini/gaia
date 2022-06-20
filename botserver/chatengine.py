@@ -82,13 +82,14 @@ class chatEngine():
         bag = [0]*len(self.__words)
         for s in sentenceWords:
             if self.__debugMode:
-                print(f"        bag [{s}]")
+                print(f"        bag '{s}'")
+                print(f"            {self.__words}")
             for i, w in enumerate(self.__words):
                 if w == s:
                     # assign 1 if current word is in the vocabulary position
                     bag[i] = 1
                     if self.__debugMode:
-                        print(f"         ->  {w}")
+                        print(f"            MATCH  ->  {{pos:{i+1}, word:{w}}}")
         return(numpy.array(bag))
 
 
@@ -121,12 +122,12 @@ class chatEngine():
     # @return (String) Replied message
     def message(self, username=None, message=None):
         if not username or not message:
-            self.__valid = False
             return None
-        _ = self.__users.user(Username=username)
+        _ = self.__users.data(Username=username)
         # Get prediction class
         intents = self.__predictClass(message=message)
-        print(f"        {intents}")
+        if self.__debugMode:
+            print(f"        {intents}")                 # [{'intent': '...', 'probability': '...'}]
         # Get response and reply it back
         result = self.__getResponse(intents)
         self.__log.Write(msgtype='message', message1=message, message2=result)

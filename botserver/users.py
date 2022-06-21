@@ -34,9 +34,11 @@ class database():
 
 
     # Return user info from database
-    def data(self, Username=None):
+    def data(self, Username=None, Variable=None):
         if not Username:
             return None
         if not Username in self.__db:
-            self.__db[Username] = {}
-        return self.__db[Username]
+            self.__db[Username] = {'username': Username}
+        if not Variable in self.__db[Username]:
+            return None
+        return self.__db[Username][Variable]

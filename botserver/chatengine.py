@@ -7,7 +7,9 @@
 #
 
 import os
+import re
 import sys
+import datetime
 # 0 = all messages are logged (default behavior)
 # 1 = INFO messages are not printed
 # 2 = INFO and WARNING messages are not printed
@@ -103,6 +105,8 @@ class chatEngine():
         return_list = []
         for r in results:
             return_list.append({"intent": self.__classes[r[0]], "probability": str(r[1])})
+        if self.__debugMode:
+            print(f"        predict\n            {return_list}")                 # [{'intent': '...', 'probability': '...'}]
         return return_list
 
     def __getResponse(self, intents):
@@ -111,7 +115,36 @@ class chatEngine():
             if (i['tag']== tag):
                 result = random.choice(i['responses'])
                 break
+        if self.__debugMode:
+            print(f'        random\n            "{result}"')
         return result
+
+    def __evaluate(self, accumulator, remainder, username):
+        regex = r"\{\{([A-Za-z0-9,%:\+\-\ ]+)\}\}"            # pattern match for {{vars}}
+        matches = re.finditer(regex, remainder, re.MULTILINE)
+        try:
+            item = next(matches)
+            value = self.__evaluateValue(originalValue=item.group(), username=username)
+            (accumulator, remainder) = self.__evaluate(accumulator + remainder[:item.start()] + value, remainder[item.end():], username)
+        except StopIteration as it:
+            accumulator += remainder
+        return (accumulator, remainder)
+
+    # Evaluating variables substitutions and sandboxed functions only, it won't be a plain eval() on everything
+    def __evaluateValue(self, originalValue=None, username=None):
+        evaluate = originalValue[2:-2].split(',')           # Remove {{}} and arg split
+        if len(evaluate) == 0:
+            return ''
+        elif evaluate[0] == 'user':                         # User defined information, '' on None
+            value = self.__users.data(Username=username, Variable=evaluate[1])
+            return '' if not value else value
+        elif evaluate[0] == 'datetime':                     # datetime functions  (evaluate[1]: datetime format)
+            if len(evaluate) < 2:
+                evaluate.append('%H:%M')
+            now = datetime.datetime.now()
+            return now.strftime(evaluate[1])
+
+        return "(unknown command)"                          # ?
 
 
     # Send a <message> to <username>
@@ -123,12 +156,8 @@ class chatEngine():
     def message(self, username=None, message=None):
         if not username or not message:
             return None
-        _ = self.__users.data(Username=username)
-        # Get prediction class
-        intents = self.__predictClass(message=message)
-        if self.__debugMode:
-            print(f"        {intents}")                 # [{'intent': '...', 'probability': '...'}]
-        # Get response and reply it back
-        result = self.__getResponse(intents)
+        intents = self.__predictClass(message=message)                  # Get prediction class
+        result = self.__getResponse(intents)                            # Get response and reply it back
+        (result, _) = self.__evaluate("", result, username)             # Post processing evaluation
         self.__log.Write(msgtype='message', message1=message, message2=result)
         return result

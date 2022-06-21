@@ -19,7 +19,7 @@ class database():
     def list(self):
         return self.__intents
 
-    # Constructor
+    # Constructor, load all json files into [intent] dictionary
     def __init__(self, path):
         self.__intents = {}
         self.__intents['intents'] = []

@@ -32,9 +32,11 @@ if __name__ == '__main__':
     try:
         # Command line arguments
         parser = argparse.ArgumentParser(description='Chatbot test console')
-        parser.add_argument('-U', '--username', metavar='USER', type=str, help='Username upon login', default='')
+        parser.add_argument('-U', '--username', metavar='USER',    type=str, help='Username upon login',     default='')
+        parser.add_argument('-M', '--message',  metavar='MESSAGE', type=str, help='Prebuilt phrase to send', default='')
         args = parser.parse_args()
         username = args.username.strip()
+        message  = args.message.strip()
 
         # Chat engine setup
         engine = chatEngine(pathProgram=str(pathlib.Path(__file__).parent.resolve())+os.path.sep+"..", debug=True)
@@ -49,9 +51,13 @@ if __name__ == '__main__':
             if not username or username == '' or username=='exit':
                 print("Invalid username")
                 sys.exit(1)
-        printHelp()
+        # Prebuilt phrase in stdin, evaluate that one and exit
+        if message:
+            print(engine.message(username=username, message=message))
+            sys.exit(0)
 
-        # Main loop
+        # Main loop, if needed
+        printHelp()
         print(f"[username: {username}]")
         while cmd != 'exit':
             cmdLast = cmd

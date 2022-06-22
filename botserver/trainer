@@ -9,7 +9,9 @@
 #
 print("- Loading trainer engine", flush=True)
 import os
+import re
 import sys
+import string
 import datetime
 timeStart = datetime.datetime.now()
 #
@@ -25,9 +27,9 @@ try:
     import random
     import pickle
     import pathlib
-    import simplemma
-    from keras.models import Sequential
-    from keras.layers import Dense, Dropout
+    import simplemma                                    # Good lemmatizer with local languages extensions
+    from   keras.models import Sequential
+    from   keras.layers import Dense, Dropout
     # from keras.optimizers import SGD [type: ignore, get a rid of vscode linter warnings]
     from tensorflow.keras.optimizers import SGD         # type: ignore
 
@@ -40,10 +42,25 @@ except ModuleNotFoundError as E:
     sys.exit(1)
 
 
+# Change variables with random strings
+def patternClear(accumulator='', pattern=''):
+    try:
+        matches = re.finditer(defines.REGEX, pattern, re.MULTILINE)
+        item = next(matches)
+        key = item.group()
+        if key not in patternList:
+            patternList[key] = ''.join(random.choice(string.ascii_uppercase) for x in range(20))
+        (accumulator, pattern) = patternClear(accumulator + pattern[:item.start()] + patternList[key], pattern[item.end():])
+    except StopIteration as it:
+        accumulator += pattern
+    return (accumulator, pattern)
+
+
 # Phase [1]. Loading json database
 words           = []                                    # Set of words in all [intents]
 classes         = []                                    # List of unique tags in [intents]
 documents       = []                                    # Tuple of sentences for each tag in [intents]
+patternList     = {}                                    # Special words patterns (variables), obscurating them before learning
 ignore_words    = ['?', '!']                            # Ignore these words from learning process
 dbPath = str(pathlib.Path(__file__).parent.resolve()) + os.path.sep + ".." + os.path.sep + "db"
 intents = intent.database(dbPath)
@@ -62,6 +79,7 @@ print("- Preprocess data [words,documents,classes]", flush=True)
 # Words splitting
 for intent in intents.list['intents']:
     for pattern in intent['patterns']:
+        (pattern, _) = patternClear(accumulator='', pattern=pattern)
         w = nltk.word_tokenize(pattern)                     # Tokenize each word
         words.extend(w)
         documents.append((w, intent['tag']))                # Add documents in the corpus
@@ -84,10 +102,10 @@ print(f"                          {classes}")
 # words = all words, vocabulary
 print(f"    - Lemmatized Words    {len(words)}")
 print(f"                          {words}")
-fileWords   = dbPath + os.path.sep + defines.FILE_WORDS
-fileClasses = dbPath + os.path.sep + defines.FILE_CLASSES
-pickle.dump(words,open(fileWords,'wb'))
-pickle.dump(classes,open(fileClasses,'wb'))
+fileWords     = dbPath + os.path.sep + defines.FILE_WORDS
+fileClasses   = dbPath + os.path.sep + defines.FILE_CLASSES
+pickle.dump(words,     open(fileWords,     'wb'))
+pickle.dump(classes,   open(fileClasses,   'wb'))
 
 
 # Phase [3]. Create training and testing data
@@ -98,7 +116,6 @@ print("  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 training = []
 # create an empty array for our output
 output_empty = [0] * len(classes)
-
 # training set, bag of words for each sentence
 for doc in documents:
     # initialize our bag of words
@@ -114,7 +131,6 @@ for doc in documents:
     # output is a '0' for each tag and '1' for current tag (for each pattern)
     output_row = list(output_empty)
     output_row[classes.index(doc[1])] = 1
-    
     training.append([bag, output_row])
 
 # shuffle our features and turn into np.array
@@ -124,6 +140,7 @@ training = numpy.array(training, dtype=object)
 train_x = list(training[:,0])
 train_y = list(training[:,1])
 print("    - Training data created")
+
 
 # Phase [4]. Build the model
 # Create model - 3 layers. First layer 128 neurons, second layer 64 neurons and 3rd output layer contains number of neurons
@@ -145,9 +162,9 @@ fileModel = dbPath + os.path.sep + defines.FILE_MODEL
 model.save(fileModel, hist)
 
 print("    - Model saved")
-print(f"        Words {fileWords}")
-print(f"        Class {fileClasses}")
-print(f"        Model {fileModel}")
+print(f"        Words     {fileWords}")
+print(f"        Class     {fileClasses}")
+print(f"        Model     {fileModel}")
 
 timeEnd  = datetime.datetime.now()
 timeDiff = timeEnd - timeStart

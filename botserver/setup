@@ -16,7 +16,7 @@ try:
     import keras
     import pickle
     import tensorflow
-    import simplemma    
+    import simplemma                # Language capable lemmatizer
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
     sys.exit(1)

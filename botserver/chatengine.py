@@ -22,6 +22,7 @@ try:
     import numpy
     import pickle
     import random
+    import simplemma                                    # Good lemmatizer with local languages extensions
 
     # Program imports
     import log
@@ -54,27 +55,31 @@ class chatEngine():
             self.__log.Write("Engine initialized")
             config = serverConfiguration(configFile= pathProgram+os.path.sep+defines.FILE_CONFIG)
             if not config.valid: raise Exception(config.error)
-            self.__threshold  = config.property['chatThreshold']
+            self.__threshold    = config.property['chatThreshold']
+            self.__languageData = simplemma.load_data(*(config.property['language']))
+            self.__ignoreWords  = ['?', '!']
         except Exception as E:
             self.__error   = str(E).strip()
             self.__valid   = False
 
 
     def reload(self):
-        self.__users      = users.database(self.__pathDb)
-        self.__intents    = intent.database(self.__pathDb)
-        self.__model      = keras.models.load_model(self.__pathDb + os.path.sep + defines.FILE_MODEL)
-        self.__words      = pickle.load(open(self.__pathDb + os.path.sep + defines.FILE_WORDS, 'rb'))
-        self.__classes    = pickle.load(open(self.__pathDb + os.path.sep + defines.FILE_CLASSES, 'rb'))
-        self.__lemmatizer = nltk.stem.WordNetLemmatizer()
+        self.__users      = users.database(self.__pathDb)                                                   # User's list with possible knowledge about them
+        self.__intents    = intent.database(self.__pathDb)                                                  # Array with all possible intents
+        self.__model      = keras.models.load_model(self.__pathDb + os.path.sep + defines.FILE_MODEL)       # Applied keras model
+        self.__words      = pickle.load(open(self.__pathDb + os.path.sep + defines.FILE_WORDS, 'rb'))       # Word array list
+        self.__classes    = pickle.load(open(self.__pathDb + os.path.sep + defines.FILE_CLASSES, 'rb'))     # Class list, array with all "tag" items
+        self.__lemmatizer = nltk.stem.WordNetLemmatizer()                                                   # Currently used lemmatizer
 
 
     def __CleanupSentence(self, message):
         # tokenize the pattern - split words into array
-        sentenceWords = nltk.word_tokenize(message)
+        sentenceWords = []
+        w = nltk.word_tokenize(message)
         # stem each word - create short form for word
-        sentenceWords = [self.__lemmatizer.lemmatize(word.lower()) for word in sentenceWords]
-        return sentenceWords
+        sentenceWords.extend(w)
+        return [simplemma.lemmatize(w.lower(), self.__languageData) for w in sentenceWords if w not in self.__ignoreWords]
+
 
     # return bag of words array: 0 or 1 for each word in the bag that exists in the sentence
     def __bow(self, message):
@@ -82,10 +87,11 @@ class chatEngine():
         sentenceWords = self.__CleanupSentence(message)
         # bag of words - matrix of N words, vocabulary matrix
         bag = [0]*len(self.__words)
+        if self.__debugMode:
+            print(f"        words {self.__words}\n")
         for s in sentenceWords:
             if self.__debugMode:
                 print(f"        bag '{s}'")
-                print(f"            {self.__words}")
             for i, w in enumerate(self.__words):
                 if w == s:
                     # assign 1 if current word is in the vocabulary position
@@ -94,7 +100,7 @@ class chatEngine():
                         print(f"            MATCH  ->  {{pos:{i+1}, word:{w}}}")
         return(numpy.array(bag))
 
-
+    # Predict possible match with user's message
     def __predictClass(self, message=None):
         # filter out predictions below a threshold
         p = self.__bow(message)
@@ -109,6 +115,11 @@ class chatEngine():
             print(f"        predict\n            {return_list}")                 # [{'intent': '...', 'probability': '...'}]
         return return_list
 
+    def __setContext(self, message=None, username=None, intents=[]):
+        if not message or not username or intents==[]:
+            return
+
+
     def __getResponse(self, intents):
         tag = intents[0]['intent']
         for i in self.__intents.list['intents']:
@@ -120,8 +131,7 @@ class chatEngine():
         return result
 
     def __evaluate(self, accumulator, remainder, username):
-        regex = r"\{\{([A-Za-z0-9,%:\+\-\ ]+)\}\}"            # pattern match for {{vars}}
-        matches = re.finditer(regex, remainder, re.MULTILINE)
+        matches = re.finditer(defines.REGEX, remainder, re.MULTILINE)
         try:
             item = next(matches)
             value = self.__evaluateValue(originalValue=item.group(), username=username)
@@ -135,15 +145,20 @@ class chatEngine():
         evaluate = originalValue[2:-2].split(',')           # Remove {{}} and arg split
         if len(evaluate) == 0:
             return ''
+
         elif evaluate[0] == 'user':                         # User defined information, '' on None
+            if len(evaluate) < 2:
+                return ''
             value = self.__users.data(Username=username, Variable=evaluate[1])
+            if evaluate[1]=='name' and value is None:               # Name not found, picking username instead
+                value = self.__users.data(Username=username, Variable='username')
             return '' if not value else value
+
         elif evaluate[0] == 'datetime':                     # datetime functions  (evaluate[1]: datetime format)
             if len(evaluate) < 2:
                 evaluate.append('%H:%M')
             now = datetime.datetime.now()
             return now.strftime(evaluate[1])
-
         return "(unknown command)"                          # ?
 
 
@@ -156,8 +171,13 @@ class chatEngine():
     def message(self, username=None, message=None):
         if not username or not message:
             return None
-        intents = self.__predictClass(message=message)                  # Get prediction class
-        result = self.__getResponse(intents)                            # Get response and reply it back
-        (result, _) = self.__evaluate("", result, username)             # Post processing evaluation
+        if self.__debugMode:
+            print("^" * 60)
+        intents = self.__predictClass(message=message)                          # Get prediction class
+        self.__setContext(message=message, username=username, intents=intents)  # Context setup (if any) for predicted reply
+        result = self.__getResponse(intents)                                    # Get possible response and reply it back [result]
+        (result, _) = self.__evaluate("", result, username)                     # Post processing evaluation
+        if self.__debugMode:
+            print("_" * 60)
         self.__log.Write(msgtype='message', message1=message, message2=result)
         return result

@@ -38,19 +38,21 @@ if __name__ == '__main__':
         username = args.username.strip()
         message  = args.message.strip()
 
-        # Chat engine setup
-        engine = chatEngine(pathProgram=str(pathlib.Path(__file__).parent.resolve())+os.path.sep+"..", debug=True)
-        if not engine.valid:
-            print(f'chatEngine not correctly initialized ({engine.error})')
-            sys.exit(1)
-        cmd = ''
-        # Input username
-        print("\nTest command console, just write your username and start talking")
+        # Input username if needed
         if not username:
+            print("\nTest command console, just write your username and start talking")
             username = input('Username> ').strip()
             if not username or username == '' or username=='exit':
                 print("Invalid username")
                 sys.exit(1)
+
+        # Chat engine setup
+        # TODO: check if users.yaml db does not exists, create a new one when needed
+        engine = chatEngine(pathProgram=str(pathlib.Path(__file__).parent.resolve())+os.path.sep+"..", debug=True)
+        if not engine.valid:
+            print(f'chatEngine not correctly initialized ({engine.error})')
+            sys.exit(1)
+
         # Prebuilt phrase in stdin, evaluate that one and exit
         if message:
             print(engine.message(username=username, message=message))
@@ -59,6 +61,7 @@ if __name__ == '__main__':
         # Main loop, if needed
         printHelp()
         print(f"[username: {username}]")
+        cmd = ''
         while cmd != 'exit':
             cmdLast = cmd
             cmd = input("> ").strip()

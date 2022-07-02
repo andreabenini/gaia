@@ -42,3 +42,14 @@ class database():
         if not Variable in self.__db[Username]:
             return None
         return self.__db[Username][Variable]
+
+
+    # Set variable=value for [username] or delete it if [None]
+    def set(self, Username=None, Variable=None, Value=None):
+        if not Username or not Variable:
+            return False
+        if Value:
+            self.__db[Username][Variable] = Value
+        else:
+            del(self.__db[Username][Variable])
+

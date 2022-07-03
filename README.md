@@ -15,6 +15,4 @@ gaia companion bot
 - `doc` dir. Various documents related to this project
 
 
-### TODOs
-- https://adrien.barbaresi.eu/blog/simple-multilingual-lemmatizer-python.html  
-    Multilingual lemmatizer for Python, to test and see how it goes.
+### TODO

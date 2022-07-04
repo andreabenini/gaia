@@ -24,8 +24,10 @@ class writer():
         if self.__logFile == None:
             raise ValueError(f"Cannot open '{filename}' for writing")
     
-    def Write(self, message1='', message2=None, msgtype='system'):
+    def Write(self, msgtype='system', message1='', message2=None, message3=None):
         logline = [datetime.datetime.strftime(datetime.datetime.now(), '%Y/%m/%d %H:%M:%S'), msgtype, message1]
         if message2:
             logline += [message2]
+        if message3:
+            logline += [message3]
         self.__logFile.writerow(logline)

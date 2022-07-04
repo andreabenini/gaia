@@ -48,6 +48,7 @@ class database():
     def set(self, Username=None, Variable=None, Value=None):
         if not Username or not Variable:
             return False
+        self.data(Username=Username, Variable=Variable)
         if Value:
             self.__db[Username][Variable] = Value
         else:

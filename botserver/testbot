@@ -47,7 +47,6 @@ if __name__ == '__main__':
                 sys.exit(1)
 
         # Chat engine setup
-        # TODO: check if users.yaml db exists, create a new one when needed
         engine = chatEngine(pathProgram=str(pathlib.Path(__file__).parent.resolve())+os.path.sep+"..", debug=True)
         if not engine.valid:
             print(f'chatEngine not correctly initialized ({engine.error})')

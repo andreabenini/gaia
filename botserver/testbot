@@ -20,6 +20,7 @@ except ModuleNotFoundError as E:
 def printHelp():
     print()
     print("'.'      to repeat last command")
+    print("'log'    log last query as invalid")
     print("'reload' to reload knowledge database")
     print("'help'   print this help")
     print("'exit'   to close program")
@@ -73,6 +74,9 @@ if __name__ == '__main__':
             elif cmd == 'reload':
                 print("Reloading database engine")
                 engine.reload()
+            elif cmd == 'log':
+                print(f"Logging as invalid last query: '{cmdLast}'")
+                engine.logQuery(username, cmdLast, reason="INVALID REPLY")
             else:
                 print("\n"+ engine.message(username=username, message=cmd))
         print()

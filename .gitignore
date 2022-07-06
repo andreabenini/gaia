@@ -1,5 +1,9 @@
 # Python cache files
 __*
+
+# Server sensitive data
+config.yaml
+
 # Reserved directories
 certs/*
 db/*

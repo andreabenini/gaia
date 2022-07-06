@@ -11,3 +11,11 @@ chatThreshold: 0.65             # chatbot recognition threshold
 # List of allowed clients, with certificates (common name: CN)
 allowedClients:
     - botctl
+
+# Plugin configuration section
+plugin:
+    weather:
+        api: <API KEY>          # OpenWeatherMap API key
+        lat: <latitude>         # Lat  applied for requiring default weather data
+        lon: <longitude>        # Lon
+        units: metric           # Default scale applied when it's not specified

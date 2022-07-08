@@ -2,12 +2,12 @@
 #
 # datetime dynamic module
 #
-# @return reply(inputList) -> string with required output
+# @return reply(inputList, configuration) -> string with required output
 #
 #
 import datetime
 
-def reply(inputList=None):
+def reply(inputList=None, _config=None):
     if len(inputList) == 0:
         inputList.append('%H:%M')
     now = datetime.datetime.now()

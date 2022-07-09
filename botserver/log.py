@@ -19,15 +19,18 @@ class writer():
     def __init__(self, path=None):
         self.__logFile = None
         filename = path + os.path.sep + 'chat.log'
-        csvfile = open(filename, 'a+')
-        self.__logFile = csv.writer(csvfile, delimiter='|')
+        self.__csvfile = open(filename, 'a+')
+        self.__logFile = csv.writer(self.__csvfile, delimiter='|')
         if self.__logFile == None:
             raise ValueError(f"Cannot open '{filename}' for writing")
     
-    def Write(self, msgtype='system', message1='', message2=None, message3=None):
+    def Write(self, msgtype='system', message1='', message2=None, message3=None, message4=None):
         logline = [datetime.datetime.strftime(datetime.datetime.now(), '%Y/%m/%d %H:%M:%S'), msgtype, message1]
         if message2:
             logline += [message2]
         if message3:
             logline += [message3]
+        if message4:
+            logline += [message4]
         self.__logFile.writerow(logline)
+        self.__csvfile.flush()

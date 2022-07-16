@@ -1,4 +1,5 @@
 # System Messages
+Messages for dealing with server functions
 - sys,shutdown
 - sys,exit
 - sys,version

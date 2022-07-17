@@ -6,5 +6,6 @@ Messages for dealing with server functions
 - sys,ping
 
 # User commands
+Messages for dealing with server bot
 - msg,username,message
 

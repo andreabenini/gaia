@@ -69,7 +69,7 @@ intents = intent.database(dbPath)
 languageData = None
 try:
     serverConfig = serverConfiguration(configFile = '..' + os.path.sep + defines.FILE_CONFIG)
-    languageData = simplemma.load_data(*(serverConfig.property['language']))
+    languageData = tuple(serverConfig.property['language'])
 except Exception as E:
     print(f"{E}. Cannot load configuration from botserver [{defines.FILE_CONFIG}] file")
     sys.exit(1)
@@ -87,7 +87,7 @@ for intent in intents.list['intents']:
         if intent['tag'] not in classes:
             classes.append(intent['tag'])
 # lemmatize and lower each word and remove duplicates
-words = [simplemma.lemmatize(w.lower(), languageData) for w in words if w not in defines.IGNORE_WORDS]
+words = [simplemma.lemmatize(w.lower(), lang=languageData) for w in words if w not in defines.IGNORE_WORDS]
 words = sorted(list(set(words)))
 # sort classes list
 classes = sorted(list(set(classes)))

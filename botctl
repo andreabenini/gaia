@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pyright: reportMissingImports=false
+# pyright: reportMissingModuleSource=false
 #
 #   botctl - Bot Command Line Utility
 #

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pyright: reportMissingImports=false
 #
 # Barebone chat engine
 # @see:

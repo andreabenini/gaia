@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pyright: reportMissingImports=false
 #
 # trainer - Generate model file 'training_data' based on json files
 #

@@ -3,8 +3,9 @@ __*
 # Visual Studio Code bloatware
 .vscode/*
 
-# Server sensitive data
+# Client/Server sensitive data
 config.yaml
+client.config.yaml
 
 # Reserved directories
 certs/*

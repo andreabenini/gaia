@@ -14,6 +14,3 @@ gaia companion bot
 
 ### Documentation
 - `doc` dir. Documents related to this project
-
-
-### TODO

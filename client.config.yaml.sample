@@ -5,5 +5,6 @@ botserverPort: 6667             # BotServer TCP Port
 
 # List of allowed clients, with certificates (common name: CN)
 clientCertificates:
-    key: client_key.pem
-    certificate: client_cert.pem
+    ca: certs/ca_gaia_cert.pem              # ca_key.pem file
+    key: certs/client_key.pem               # client key file
+    certificate: certs/client_cert.pem      # client certificate file

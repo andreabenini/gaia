@@ -4,15 +4,18 @@
 # Python botserver daemon
 # @see:
 #       Message format:
-#           "sys,command"           System command [exit, shutdown, ping]
+#           "sys,command"           System command [exit, shutdown, ping, version]
 #           "msg,username,message"  Send message to username
 #
+# pyright: reportMissingImports=false
+# pyright: reportMissingSource=false
 
 # Program imports
 import sys
-import socket
 try:
     import ssl
+    import socket
+    import select
     import OpenSSL                  # pyOpenSSL
     import datetime
     import threading
@@ -21,6 +24,7 @@ except ModuleNotFoundError as E:
     sys.exit(1)
 
 # Program includes
+import defines
 from botserver_config import serverConfiguration
 from chatengine import chatEngine
 
@@ -60,14 +64,34 @@ class serverDaemon:
             self.__exit(message=self.__config.error)
         self.debug = debug
         self.__running = True
-        # TCP socket creation
+        # Incoming connection limit (pretty low, local usage only). Default:5
+        self.__tcpListenClients = int(self.__config.property['botserverConnections']) if int(self.__config.property['botserverConnections'])>0 else 5
+        # TCP socket creation (multiple sockets are allowed)
         self.__tcpTimeout = self.__config.property['botserverTimeout']
         self.__tcpBufferSize = 1024
-        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.__sock.bind((self.__config.property['botserverHost'], self.__config.property['botserverPort']))
-        self.__sock.listen(5)    # Incoming connection limit (pretty low, local usage only)
-        self.__debugPrint(message=f"daemon started {(self.__config.property['botserverHost'], self.__config.property['botserverPort'])}  [tcp timeout: {self.__tcpTimeout}]s", level=DEBUG.INFO)
+        self.__sockList = []
+        self.__debugPrint(message=f"Daemon started [tcp timeout: {self.__tcpTimeout}s]", level=DEBUG.INFO)
+        interfaceList = self.__config.property['botserverHost'].split(',')
+        if len(interfaceList) > 0:
+            for socketName in interfaceList:
+                self.__socketConnect(socketName)
+        else:
+            self.__socketConnect('')
+
+    # create,setsock,bind,listen a socket on [interface] address
+    def __socketConnect(self, interface):
+        if interface:
+            interfaceAddress = interfaceLabel = interface
+        else:
+            interfaceLabel = '(ANY)'
+            interfaceAddress = '0.0.0.0'
+        self.__debugPrint(message=f"    interface {(interfaceLabel, self.__config.property['botserverPort'])}", level=DEBUG.INFO)
+        socketListen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socketListen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        socketListen.bind((interfaceAddress, self.__config.property['botserverPort']))
+        socketListen.listen(self.__tcpListenClients)
+        socketListen.settimeout(self.__tcpTimeout)
+        self.__sockList.append(socketListen)
 
     # Program main loop
     def loop(self):
@@ -80,36 +104,40 @@ class serverDaemon:
         context.verify_mode = ssl.CERT_REQUIRED
         context.load_cert_chain(self.__config.serverCertificate, self.__config.serverKey)
         # Server loop
-        self.__sock.settimeout(self.__tcpTimeout)
         while self.__running:                                                       # Until self.__socketClose(self.__sock)
-            try:
-                Client, Address = self.__sock.accept()
-                secureClientSocket = context.wrap_socket(Client, server_side=True)  # TLS, make socket connection to clients secure by using SSL wrapper
-                # Get certificate from client and validate it
-                clientCertificate = secureClientSocket.getpeercert(True)
-                if not clientCertificate:
-                    self.__debugPrint("Invalid client certificate")
-                    raise OSError()
-                x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, clientCertificate)
-                expiryStart = datetime.datetime.strptime(x509.get_notBefore().decode('ascii'), '%Y%m%d%H%M%SZ')
-                expiryEnd   = datetime.datetime.strptime(x509.get_notAfter().decode('ascii'),  '%Y%m%d%H%M%SZ')
-                isExpired   = (expiryStart > datetime.datetime.now()) or (expiryEnd < datetime.datetime.now())
-                self.__debugPrint(entity=Address, level=DEBUG.VERBOSE,
-                                 message=f"[Agent: {x509.get_subject().CN}]   [Expired:{isExpired}, {expiryStart} -> {expiryEnd}]")
-                if isExpired:
-                    raise ValueError(f"Client certificate expired [{expiryStart} -> {expiryEnd}], disconnecting")
-                if x509.get_subject().CN not in self.__config.property['allowedClients']:
-                    raise ValueError(f"Client not allowed, disconnecting")
+            # Read,Write,Except                      inputs,   outputs,   inputs            [[[ SELECT ]]]
+            readSocketList, _, _ = select.select(self.__sockList, [], self.__sockList)
+            for currentSocket in readSocketList:
+                try:
+                    Client, Address = currentSocket.accept()
+                    secureClientSocket = context.wrap_socket(Client, server_side=True)  # TLS, make socket connection to clients secure by using SSL wrapper
 
-                # Reply to client
-                secureClientSocket.settimeout(self.__tcpTimeout)     # Client inactivity timeout (1min)
-                threading.Thread(target=self.__reply, args=(secureClientSocket, Address) ).start()
-            except ValueError as e:
-                entity = Address if Address else '(unknown)'
-                self.__debugPrint(entity=entity, message=str(e), level='ERROR')
-                self.__socketClose(Client)
-            except OSError:                                         # Socket closed (maybe a daemon shutdown)
-                pass
+                    # Get certificate from client and validate it
+                    clientCertificate = secureClientSocket.getpeercert(True)
+                    if not clientCertificate:
+                        self.__debugPrint("Invalid client certificate")
+                        raise OSError()
+                    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, clientCertificate)
+                    expiryStart = datetime.datetime.strptime(x509.get_notBefore().decode('ascii'), '%Y%m%d%H%M%SZ')
+                    expiryEnd   = datetime.datetime.strptime(x509.get_notAfter().decode('ascii'),  '%Y%m%d%H%M%SZ')
+                    isExpired   = (expiryStart > datetime.datetime.now()) or (expiryEnd < datetime.datetime.now())
+                    self.__debugPrint(entity=Address, level=DEBUG.VERBOSE,
+                                      message=f"[Agent: {x509.get_subject().CN}]   [Expired:{isExpired}, {expiryStart} -> {expiryEnd}]")
+                    if isExpired:
+                        raise ValueError(f"Client certificate expired [{expiryStart} -> {expiryEnd}], disconnecting")
+                    if x509.get_subject().CN not in self.__config.property['allowedClients']:
+                        raise ValueError(f"Client not allowed, disconnecting")
+
+                    # Reply to client
+                    secureClientSocket.settimeout(self.__tcpTimeout)     # Client inactivity timeout (1min)
+                    threading.Thread(target=self.__reply, args=(secureClientSocket, Address) ).start()
+
+                except ValueError as e:
+                    entity = Address if Address else '(unknown)'
+                    self.__debugPrint(entity=entity, message=str(e), level='ERROR')
+                    self.__socketClose(Client)
+                except OSError:                                         # Socket closed (maybe a daemon shutdown)
+                    pass
 
 
     # Close an opened socket
@@ -148,6 +176,8 @@ class serverDaemon:
                         self.__socketClose(client)
                     elif command[1] == 'ping':
                         self.__sendMessage(client, 'pong')
+                    elif command[1] == 'version':
+                        self.__sendMessage(client, defines.NAME+' v'+defines.VERSION)
                     else:
                         self.__sendMessage(client, f"ERROR: Invalid system command ({command[1]})")
                 # chatEngine message
@@ -177,7 +207,8 @@ class serverDaemon:
 
     # System daemon shutdown
     def __daemonShutdown(self):
-        self.__socketClose(self.__sock)
+        for socket in self.__sockList:
+            self.__socketClose(socket)
         self.__running = False
 
 

@@ -5,6 +5,7 @@
 botserverHost: "127.0.0.1"
 botserverPort: 6667             # BotServer TCP Port
 botserverTimeout: 60            # BotServer TCP Socket Timeout
+botserverConnections: 5         # BotServer listening connections, keep it as low as possible
 
 language:                       # bot language for lemmatizer
     - it

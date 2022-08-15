@@ -1,0 +1,9 @@
+# bot client configuration file only
+# use this file to connect FROM clients TO server only
+botserverHost: "127.0.0.1"      # MUST use "CN" if something different from localhost
+botserverPort: 6667             # BotServer TCP Port
+
+# List of allowed clients, with certificates (common name: CN)
+clientCertificates:
+    key: client_key.pem
+    certificate: client_cert.pem

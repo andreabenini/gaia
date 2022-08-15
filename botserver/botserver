@@ -35,7 +35,7 @@ def enum(**enums):
 def enumNames(enumObj):
     fields = [field for field in enumObj.__dict__.keys() if not field.startswith('_')]
     return fields
-DEBUG = enum(INFO=0, OFF=1, DEBUG=2, VERBOSE=3, FULL=4)
+DEBUG = enum(ERROR=-1, INFO=0, OFF=1, DEBUG=2, VERBOSE=3, FULL=4)
 
 
 # Main (and only) class
@@ -134,7 +134,7 @@ class serverDaemon:
 
                 except ValueError as e:
                     entity = Address if Address else '(unknown)'
-                    self.__debugPrint(entity=entity, message=str(e), level='ERROR')
+                    self.__debugPrint(entity=entity, message=str(e), level=DEBUG.ERROR)
                     self.__socketClose(Client)
                 except OSError:                                         # Socket closed (maybe a daemon shutdown)
                     pass

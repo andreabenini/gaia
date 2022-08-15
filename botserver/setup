@@ -10,13 +10,19 @@ import sys
 print("- Checking required project imports", flush=True)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 try:
+    # SSL and the liking
+    import ssl
+    import OpenSSL
+    # YAML (mostly pyyaml) module
     import yaml
+    # NLTK and KERAS, all others are dependencies
     import nltk
     import numpy
     import keras
     import pickle
     import tensorflow
-    import simplemma                # Language capable lemmatizer
+    # Multi language capable lemmatizer
+    import simplemma
 except ModuleNotFoundError as E:
     print(f"{E}. Install required modules.")
     sys.exit(1)

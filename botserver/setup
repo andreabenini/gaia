@@ -35,4 +35,8 @@ nltk.download('wordnet')
 nltk.download('omw-1.4')
 nltk.download('snowball_data')
 
+# Basic directories
+os.makedirs('db',       exist_ok=True)      # Database directory
+os.makedirs('certs',    exist_ok=True)      # Server certificates directory
+
 print("\n- Setup completed, now you're ready to train your model\n")

@@ -52,7 +52,7 @@ class chatEngine():
             config = serverConfiguration(configFile= pathProgram+os.path.sep+defines.FILE_CONFIG)
             if not config.valid: raise Exception(config.error)
             self.__threshold    = config.property['chatThreshold']
-            self.__languageData = simplemma.load_data(*(config.property['language']))
+            self.__languageData = tuple(config.property['language'])
             #
             self.__pathDb       = pathProgram + os.path.sep + "db"
             self.__modules      = modules.modules(pathProgram+os.path.sep+"botserver"+os.path.sep+"module", config.property['plugin'])
@@ -85,7 +85,7 @@ class chatEngine():
         w = nltk.word_tokenize(message)
         # stem each word - create short form for word
         sentenceWords.extend(w)
-        return [simplemma.lemmatize(w.lower(), self.__languageData) for w in sentenceWords if w not in defines.IGNORE_WORDS]
+        return [simplemma.lemmatize(w.lower(), lang=(self.__languageData)) for w in sentenceWords if w not in defines.IGNORE_WORDS]
 
 
     # return bag of words array: 0 or 1 for each word in the bag that exists in the sentence

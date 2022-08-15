@@ -35,7 +35,7 @@ def enum(**enums):
 def enumNames(enumObj):
     fields = [field for field in enumObj.__dict__.keys() if not field.startswith('_')]
     return fields
-DEBUG = enum(ERROR=-1, INFO=0, OFF=1, DEBUG=2, VERBOSE=3, FULL=4)
+DEBUG = enum(ERROR=0, INFO=1, OFF=2, DEBUG=3, VERBOSE=4, FULL=5)
 
 
 # Main (and only) class
@@ -201,11 +201,6 @@ class serverDaemon:
 
     # Local debug print on stdout when needed
     def __debugPrint(self, entity='botserver', message=None, level=DEBUG.DEBUG):
-        
-        # DEBUG:
-        print(self.debug)
-        print(level)
-
         if self.debug >= level:
             print(f"{str(enumNames(DEBUG)[level]).ljust(7)} {str(entity).ljust(21)} {message}")
 

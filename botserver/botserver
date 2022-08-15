@@ -121,8 +121,7 @@ class serverDaemon:
                     expiryStart = datetime.datetime.strptime(x509.get_notBefore().decode('ascii'), '%Y%m%d%H%M%SZ')
                     expiryEnd   = datetime.datetime.strptime(x509.get_notAfter().decode('ascii'),  '%Y%m%d%H%M%SZ')
                     isExpired   = (expiryStart > datetime.datetime.now()) or (expiryEnd < datetime.datetime.now())
-                    self.__debugPrint(entity=Address, level=DEBUG.VERBOSE,
-                                      message=f"[Agent: {x509.get_subject().CN}]   [Expired:{isExpired}, {expiryStart} -> {expiryEnd}]")
+                    self.__debugPrint(entity=Address, level=DEBUG.VERBOSE, message=f"[Agent: {x509.get_subject().CN}]   [Expired:{isExpired}, {expiryStart} -> {expiryEnd}]")
                     if isExpired:
                         raise ValueError(f"Client certificate expired [{expiryStart} -> {expiryEnd}], disconnecting")
                     if x509.get_subject().CN not in self.__config.property['allowedClients']:
@@ -202,6 +201,11 @@ class serverDaemon:
 
     # Local debug print on stdout when needed
     def __debugPrint(self, entity='botserver', message=None, level=DEBUG.DEBUG):
+        
+        # DEBUG:
+        print(self.debug)
+        print(level)
+
         if self.debug >= level:
             print(f"{str(enumNames(DEBUG)[level]).ljust(7)} {str(entity).ljust(21)} {message}")
 

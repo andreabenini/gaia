@@ -90,7 +90,7 @@ class botCtl:
             self.__error(str(E))
 
     # Constructor
-    def __init__(self, configuration=None, debug=False):
+    def __init__(self, configuration=None, host=None, debug=False):
         self.__valid = False
         try:
             # yaml loading
@@ -100,10 +100,20 @@ class botCtl:
             fHandler.close()
             if 'botserverHost'    not in config: raise Exception("[botserverHost] not found in configuration file")
             if 'botserverPort'    not in config: raise Exception("[botserverPort] not found in configuration file")
-            config['botserverTimeout'] = int(config['botserverTimeout']) if 'botserverTimeout' in config else 20
-            self.__host    = config['botserverHost']
+            # Host connection
+            if host:
+                self.__host = host
+            else:
+                hostList = config['botserverHost'].split(',')
+                if len(hostList)==0 or hostList[0]=='':
+                    self.__host = '127.0.0.1'
+                else:
+                    self.__host = hostList[0]
+            # Port, timeout
             self.__port    = int(config['botserverPort'])
+            config['botserverTimeout'] = int(config['botserverTimeout']) if 'botserverTimeout' in config else 20
             self.__timeout = config['botserverTimeout']-5 if config['botserverTimeout']-5 > 0 else 20
+            #
             self.debug = debug
 
             # Certification files checkings
@@ -169,13 +179,14 @@ if __name__ == '__main__':
     try:
         # Parsing command line params
         parser = argparse.ArgumentParser(description='Bot command line interface')
-        parser.add_argument('-d', '--debug',  dest='debug',   action='store_true', help='Turn on debugging')
-        parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str,   help=f'Client configuration file [default: {defines.FILE_CONFIG}]', default=defines.FILE_CONFIG)
+        parser.add_argument('-d', '--debug',  dest='debug',   action='store_true',   help='Turn on debugging')
+        parser.add_argument('-c', '--configuration', metavar='CONFIG', type=str, help=f'Client configuration file [default: {defines.FILE_CONFIG}]',  default=defines.FILE_CONFIG)
+        parser.add_argument('-H', '--host',          metavar='HOST',   type=str, help=f'Connect to host and override "{defines.FILE_CONFIG}" values', default=None)
         parser.set_defaults(debug=False)
         args = parser.parse_args()
 
         # Command line interface console startup
-        botCommandLine = botCtl(configuration=args.configuration, debug=args.debug)
+        botCommandLine = botCtl(configuration=args.configuration, host=args.host, debug=args.debug)
         if botCommandLine.valid:
             botCommandLine.start()
     except KeyboardInterrupt:

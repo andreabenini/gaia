@@ -11,6 +11,7 @@
 # pyright: reportMissingModuleSource=false
 
 # Program imports
+from ast import Add
 import sys
 try:
     import ssl
@@ -104,13 +105,15 @@ class serverDaemon:
         context.verify_mode = ssl.CERT_REQUIRED
         context.load_cert_chain(self.__config.serverCertificate, self.__config.serverKey)
         # Server loop
-        while self.__running:                                                       # Until self.__socketClose(self.__sock)
+        while self.__running:                                                           # Until self.__socketClose(self.__sock)
             # Read,Write,Except                      inputs,   outputs,   inputs            [[[ SELECT ]]]
             readSocketList, _, _ = select.select(self.__sockList, [], self.__sockList)
             for currentSocket in readSocketList:
+                secureClientSocket = Client = Address = None
                 try:
                     Client, Address = currentSocket.accept()
                     secureClientSocket = context.wrap_socket(Client, server_side=True)  # TLS, make socket connection to clients secure by using SSL wrapper
+                    Client.close()                                                      # "standard" socket MUST be closed, now using [secureClientSocket] only
 
                     # Get certificate from client and validate it
                     clientCertificate = secureClientSocket.getpeercert(True)
@@ -128,24 +131,27 @@ class serverDaemon:
                         raise ValueError(f"Client not allowed, disconnecting")
 
                     # Reply to client
-                    secureClientSocket.settimeout(self.__tcpTimeout)     # Client inactivity timeout (1min)
+                    secureClientSocket.settimeout(self.__tcpTimeout)                    # Client inactivity timeout (1min)
                     threading.Thread(target=self.__reply, args=(secureClientSocket, Address) ).start()
 
                 except ValueError as e:
                     entity = Address if Address else '(unknown)'
                     self.__debugPrint(entity=entity, message=str(e), level=DEBUG.ERROR)
-                    self.__socketClose(Client)
-                except OSError:                                         # Socket closed (maybe a daemon shutdown)
+                    self.__socketClose(secureClientSocket)
+                except OSError:                                                         # Socket closed (maybe a daemon shutdown)
                     pass
 
 
     # Close an opened socket
     def __socketClose(self, tcpSocket):
         try:
+            entity = tcpSocket.getpeername()
             tcpSocket.shutdown(socket.SHUT_RDWR)
             tcpSocket.close()
         except OSError:
             pass
+        self.__debugPrint(entity=entity, message="socket disconnected", level=DEBUG.VERBOSE)
+
 
     # Threaded client connection reply
     def __reply(self, client, address):
@@ -202,7 +208,7 @@ class serverDaemon:
     # Local debug print on stdout when needed
     def __debugPrint(self, entity='botserver', message=None, level=DEBUG.DEBUG):
         if self.debug >= level:
-            print(f"{str(enumNames(DEBUG)[level]).ljust(7)} {str(entity).ljust(21)} {message}")
+            print(f"{str(enumNames(DEBUG)[level]).ljust(7)} {str(entity).ljust(23)} {message}")
 
     # System daemon shutdown
     def __daemonShutdown(self):

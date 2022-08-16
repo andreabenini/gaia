@@ -24,3 +24,6 @@ plugin:
         lat: <latitude>         # Lat  applied for requiring default weather data
         lon: <longitude>        # Lon
         units: metric           # Default scale applied when it's not specified
+
+# Verify server self signed certificate. Default: False
+# clientVerifySelfSigned: False

@@ -8,3 +8,8 @@ clientCertificates:
     ca: certs/ca_gaia_cert.pem              # ca_key.pem file
     key: certs/client_key.pem               # client key file
     certificate: certs/client_cert.pem      # client certificate file
+
+
+# Verify server self signed certificate. Default: False
+# clientVerifySelfSigned: False
+

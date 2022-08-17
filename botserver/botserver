@@ -107,14 +107,17 @@ class serverDaemon:
         # Server loop
         while self.__running:                                                           # Until self.__socketClose(self.__sock)
             # Read,Write,Except                      inputs,   outputs,   inputs            [[[ SELECT ]]]
-            readSocketList, _, _ = select.select(self.__sockList, [], self.__sockList)
+            try:
+                readSocketList, _, _ = select.select(self.__sockList, [], self.__sockList)
+            except ValueError:              # select() on socket list might be aborted for a system shutdown request
+                if not self.__running:
+                    return
             for currentSocket in readSocketList:
                 secureClientSocket = Client = Address = None
                 try:
                     Client, Address = currentSocket.accept()
                     secureClientSocket = context.wrap_socket(Client, server_side=True)  # TLS, make socket connection to clients secure by using SSL wrapper
                     Client.close()                                                      # "standard" socket MUST be closed, now using [secureClientSocket] only
-
                     # Get certificate from client and validate it
                     clientCertificate = secureClientSocket.getpeercert(True)
                     if not clientCertificate:
@@ -144,13 +147,23 @@ class serverDaemon:
 
     # Close an opened socket
     def __socketClose(self, tcpSocket):
-        try:
+        # Get entity name
+        try:        # client side socket connection
+            message = "Client disconnected"
             entity = tcpSocket.getpeername()
+        except:     # server side socket connection
+            try:
+                entity  = str(tcpSocket.getsockname())
+                message = "Server socket disconnected"
+            except: # generic socket
+                entity = '?'
+        # Shutdown/abort socket operation and close it
+        try:
             tcpSocket.shutdown(socket.SHUT_RDWR)
             tcpSocket.close()
         except OSError:
             pass
-        self.__debugPrint(entity=entity, message="socket disconnected", level=DEBUG.VERBOSE)
+        self.__debugPrint(entity=entity, message=message, level=DEBUG.VERBOSE)
 
 
     # Threaded client connection reply

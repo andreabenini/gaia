@@ -15,6 +15,7 @@ tmp/
 # Python Virtualenv, ignore them
 bin/*
 include/*
-lib/*
+lib
 lib64
+share
 pyvenv.cfg

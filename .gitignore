@@ -1,5 +1,7 @@
 # Python cache files
 __*
+# Glade temp files
+*glade~
 # Visual Studio Code bloatware
 .vscode/*
 

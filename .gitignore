@@ -2,10 +2,13 @@
 __*
 # Glade temp files
 *glade~
+*glade#
+
 # Visual Studio Code bloatware
 .vscode/*
 
 # Client/Server sensitive data
+*.pem
 config.yaml
 client.config.yaml
 

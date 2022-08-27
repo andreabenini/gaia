@@ -2,6 +2,8 @@
 # use this file to connect FROM clients TO server only
 botserverHost: "127.0.0.1"      # MUST use "CN" if something different from localhost
 botserverPort: 6667             # BotServer TCP Port
+#botserverTimeout:  20           # TCP timeout
+
 
 # List of allowed clients, with certificates (common name: CN)
 clientCertificates:

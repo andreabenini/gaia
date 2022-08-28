@@ -1,11 +1,13 @@
-# System Messages
-Messages for dealing with server functions
-- sys,shutdown
-- sys,exit
-- sys,version
-- sys,ping
-
-# User commands
-Messages for dealing with server bot
-- msg,username,message
-
+# Server Messages
+- System
+    - **sys,shutdown**  
+        Server shutdown request
+    - **sys,exit**  
+        Close client connection
+    - **sys,version**  
+        Get server version
+    - **sys,ping**  
+        System ping, NOP.
+- Messages
+    - **msg,username,message**  
+        Send `message` to chatbot as `username` user

@@ -2,56 +2,162 @@
 <!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
-  <template class="formMain" parent="GtkApplicationWindow">
+  <object class="GtkImage" id="imageEdit">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="stock">gtk-edit</property>
+  </object>
+  <object class="GtkImage" id="imageRefresh">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="stock">gtk-refresh</property>
+  </object>
+  <object class="GtkApplicationWindow" id="formMain">
     <property name="can-focus">False</property>
     <property name="title" translatable="yes">GAIA</property>
     <property name="default-width">800</property>
     <property name="default-height">400</property>
     <property name="type-hint">dialog</property>
+    <signal name="destroy" handler="do_menuQuit" swapped="no"/>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkMenuBar">
+          <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <child>
-              <object class="GtkMenuItem">
+              <object class="GtkMenuBar">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="label" translatable="yes">_Application</property>
-                <property name="use-underline">True</property>
-                <child type="submenu">
-                  <object class="GtkMenu">
+                <child>
+                  <object class="GtkMenuItem">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <child>
-                      <object class="GtkImageMenuItem">
-                        <property name="label">gtk-about</property>
+                    <property name="label" translatable="yes">_Server</property>
+                    <property name="use-underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="use-underline">True</property>
-                        <property name="use-stock">True</property>
-                        <property name="always-show-image">True</property>
-                        <signal name="activate" handler="do_menuAbout" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkImageMenuItem">
-                        <property name="label">gtk-quit</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="use-underline">True</property>
-                        <property name="use-stock">True</property>
-                        <property name="always-show-image">True</property>
-                        <signal name="activate" handler="do_menuQuit" swapped="no"/>
+                        <child>
+                          <object class="GtkMenuItem" id="serverUser">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">user: &lt;NONE&gt;</property>
+                            <property name="use-underline">True</property>
+                            <signal name="activate" handler="do_serverUser" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSeparatorMenuItem">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="serverVersion">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">version</property>
+                            <property name="use-underline">True</property>
+                            <signal name="activate" handler="do_serverVersion" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="serverShutdown">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">shutdown</property>
+                            <property name="use-underline">True</property>
+                            <signal name="activate" handler="do_serverShutdown" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSeparatorMenuItem">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-about</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <property name="use-stock">True</property>
+                            <property name="always-show-image">True</property>
+                            <signal name="activate" handler="do_menuAbout" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-quit</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <property name="use-stock">True</property>
+                            <property name="always-show-image">True</property>
+                            <signal name="activate" handler="do_menuQuit" swapped="no"/>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
                 </child>
+                <child>
+                  <object class="GtkImageMenuItem" id="mnuLastCommand">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="tooltip-text" translatable="yes">Repeat last command</property>
+                    <property name="image">imageRefresh</property>
+                    <property name="use-stock">False</property>
+                    <property name="always-show-image">True</property>
+                    <signal name="activate" handler="do_lastcommand" swapped="no"/>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkImageMenuItem" id="mnuMarkLastCommand">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="tooltip-text" translatable="yes">Log last command</property>
+                    <property name="image">imageEdit</property>
+                    <property name="use-stock">False</property>
+                    <property name="always-show-image">True</property>
+                    <signal name="activate" handler="do_marklastcommand" swapped="no"/>
+                  </object>
+                </child>
               </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolbar">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <child>
+                  <object class="GtkToolButton" id="serverConnect">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">Connect</property>
+                    <signal name="clicked" handler="do_serverConnect" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">False</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
           <packing>
@@ -61,12 +167,25 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTextView">
+          <object class="GtkScrolledWindow" id="scrollwindow_log">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
-            <property name="margin-left">5</property>
-            <property name="margin-right">5</property>
-            <property name="margin-top">5</property>
+            <property name="window-placement">bottom-left</property>
+            <property name="shadow-type">etched-out</property>
+            <property name="overlay-scrolling">False</property>
+            <property name="propagate-natural-height">True</property>
+            <child>
+              <object class="GtkTextView" id="log">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="margin-left">5</property>
+                <property name="margin-right">5</property>
+                <property name="margin-top">5</property>
+                <property name="editable">False</property>
+                <property name="wrap-mode">word</property>
+                <property name="cursor-visible">False</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -96,7 +215,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="btnSend">
                 <property name="label">gtk-ok</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
@@ -107,7 +226,7 @@
                 <property name="margin-bottom">5</property>
                 <property name="use-stock">True</property>
                 <property name="always-show-image">True</property>
-                <signal name="activate" handler="do_input" swapped="no"/>
+                <signal name="clicked" handler="do_input" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -124,5 +243,5 @@
         </child>
       </object>
     </child>
-  </template>
+  </object>
 </interface>
